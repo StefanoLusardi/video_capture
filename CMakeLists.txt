@@ -16,7 +16,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-include(run_conan)
+include(RunConan)
 
 message("CMAKE_SYSTEM: " ${CMAKE_SYSTEM})
 message("CMAKE_SYSTEM_NAME: " ${CMAKE_SYSTEM_NAME})
@@ -26,3 +26,17 @@ message("CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR})
 add_subdirectory(video_capture)
 add_subdirectory(video_player)
 
+option(VC_BUILD_TESTS "Build library tests" ON)
+option(VC_BUILD_EXAMPLES "Build library examples" ON)
+
+if(${VC_BUILD_TESTS})
+	message(STATUS "::VideoCapture:: Building tests")
+	include(CTest)
+	enable_testing()
+	add_subdirectory(tests)
+endif()
+
+if(${VC_BUILD_EXAMPLES})
+	message(STATUS "::VideoCapture:: Build examples")
+	add_subdirectory(examples)
+endif()
