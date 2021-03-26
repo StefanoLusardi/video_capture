@@ -1,9 +1,0 @@
-[requires]
-opencv/4.5.1
-
-[options]
-
-[generators]
-cmake
-
-[imports]

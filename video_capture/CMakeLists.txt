@@ -8,3 +8,15 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE include/${PROJECT_NAME}
     PUBLIC include
 )
+
+if(WIN32)
+    file(COPY "../ffmpeg/${CMAKE_SYSTEM_NAME}/bin/" 
+        DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+        FILES_MATCHING PATTERN "*.dll*")
+endif()
+
+if(UNIX)
+    file(COPY "../ffmpeg/${CMAKE_SYSTEM_NAME}/lib/" 
+        DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+        FILES_MATCHING PATTERN "*.so*")
+endif()
