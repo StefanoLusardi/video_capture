@@ -38,7 +38,7 @@ void video_capture::set_info_callback(const log_callback_t& cb) { _logger->set_l
 
 void video_capture::set_error_callback(const log_callback_t& cb) { _logger->set_log_callback(log_level::error, cb); }
 
-bool video_capture::open(const char* filename, decode_support decode_preference)
+bool video_capture::open(const std::string& filename, decode_support decode_preference)
 {
     log_info(_logger, "AAA", "BBB");
 
@@ -59,7 +59,7 @@ bool video_capture::open(const char* filename, decode_support decode_preference)
         return false;
     }
 
-    if (auto r = avformat_open_input(&_format_ctx, filename, nullptr, &_options); r < 0)
+    if (auto r = avformat_open_input(&_format_ctx, filename.c_str(), nullptr, &_options); r < 0)
     {
         _logger->log(log_level::error, "avformat_open_input", _logger->err2str(r));
         return false;
@@ -181,10 +181,10 @@ bool video_capture::grab()
         }
         
         av_packet_unref(_packet);
-        break;
+        return true;
     }
     
-    return true;
+    return false;
 }
 
 /*
@@ -337,7 +337,7 @@ void video_capture::release()
 
 void video_capture::reset()
 {
-    _decode_support = decode_support::default;
+    _decode_support = decode_support::none;
     
     _format_ctx = nullptr;
     _codec_ctx = nullptr; 

@@ -71,7 +71,7 @@ void run_ffmpeg(const char* video_path, vc::decode_support decode_support, const
 
 int main(int argc, char** argv)
 {
-	auto video_path = "C:/Users/StefanoLusardi/Desktop/test2.mkv";
+	auto video_path = "C:/Users/StefanoLusardi/Desktop/test_4.mp4";
 	
 	// if (argc < 1)
 	// 	return -1;
@@ -79,17 +79,17 @@ int main(int argc, char** argv)
 	// auto video_path = argv[1];
 	
 	std::thread ffmpeg_thread_sw([video_path]{run_ffmpeg(video_path, vc::decode_support::SW, "SW");});
-	std::thread ffmpeg_thread_hw([video_path]{run_ffmpeg(video_path, vc::decode_support::HW, "HW");});
-	std::thread opencv_thread([video_path]{run_opencv(video_path);});
+	// std::thread ffmpeg_thread_hw([video_path]{run_ffmpeg(video_path, vc::decode_support::HW, "HW");});
+	// std::thread opencv_thread([video_path]{run_opencv(video_path);});
 	
 	if(ffmpeg_thread_sw.joinable())
 		ffmpeg_thread_sw.join();
 		
-	if(ffmpeg_thread_hw.joinable())
-		ffmpeg_thread_hw.join();
+	// if(ffmpeg_thread_hw.joinable())
+	// 	ffmpeg_thread_hw.join();
 	
-	if(opencv_thread.joinable())
-		opencv_thread.join();
+	// if(opencv_thread.joinable())
+	// 	opencv_thread.join();
 	
 	return 0;
 }

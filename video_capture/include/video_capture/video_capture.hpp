@@ -41,7 +41,7 @@ namespace vc
 class hw_acceleration;
 class logger;
 
-enum class decode_support { default, SW, HW };
+enum class decode_support { none, SW, HW };
 
 class API_VIDEO_CAPTURE video_capture_params
 {
@@ -61,7 +61,7 @@ public:
     void set_info_callback(const log_callback_t& cb);
     void set_error_callback(const log_callback_t& cb);
     
-    bool open(const char* filename, decode_support decode_preference = decode_support::default);
+    bool open(const std::string& filename, decode_support decode_preference = decode_support::none);
     auto get_frame_size() const -> std::tuple<int, int>;
     bool next(uint8_t** data);
     void release();

@@ -2,7 +2,7 @@
 
 #include "gtest/gtest.h"
 
-namespace vc:test
+namespace vc::test
 {
 
 class vc_fixture : public ::testing::Test
@@ -12,8 +12,6 @@ protected:
     virtual ~vc_fixture() { }
     virtual void SetUp() override { }
     virtual void TearDown() override { }
-
-    dtpp::date_t d;
 
 private:
     template<typename... Args>
