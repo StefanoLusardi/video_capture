@@ -53,7 +53,14 @@ void run_ffmpeg(const char* video_path, vc::decode_support decode_support, const
 		return;
 	}
 
-	auto [w, h] = vc.get_frame_size();
+	auto size = vc.get_frame_size(); 
+	if(!size)
+	{
+		std::cout << "Unable to retrieve frame size from " << video_path << std::endl;
+		return;
+	}
+
+	auto [w, h] = size.value();
 	cv::Mat frame(h, w, CV_8UC3);
 	
 	auto start = std::chrono::high_resolution_clock::now();

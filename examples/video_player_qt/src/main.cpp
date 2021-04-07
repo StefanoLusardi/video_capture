@@ -11,3 +11,6 @@ int main(int argc, char *argv[])
     mw.show();
     return a.exec();
 }
+
+
+// rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov

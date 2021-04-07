@@ -30,13 +30,14 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 COMPONENTS Widgets REQUIRED QUIET)
 
-add_executable(${TARGET_NAME}
+add_executable(${TARGET_NAME} WIN32 MACOSX_BUNDLE
     src/main.cpp
     src/main_window.ui
     src/main_window.cpp
     src/main_window.hpp
     src/video_widget.hpp
     src/video_widget.cpp
+    res/resources.qrc
 )
 
 target_link_libraries(${TARGET_NAME} 
@@ -50,11 +51,13 @@ if(WIN32)
         file(COPY "${QTDIR}/bin/" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" FILES_MATCHING PATTERN "Qt6Cored.dll")
         file(COPY "${QTDIR}/bin/" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" FILES_MATCHING PATTERN "Qt6Guid.dll")
         file(COPY "${QTDIR}/bin/" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" FILES_MATCHING PATTERN "Qt6Widgetsd.dll")
+        file(COPY "${QTDIR}/bin/" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" FILES_MATCHING PATTERN "Qt6Svgd.dll")
     else()
         file(COPY "${QTDIR}/plugins/" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugins/" PATTERN "*d.dll" EXCLUDE)
         file(COPY "${QTDIR}/bin/" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" FILES_MATCHING PATTERN "Qt6Core.dll")
         file(COPY "${QTDIR}/bin/" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" FILES_MATCHING PATTERN "Qt6Gui.dll")
         file(COPY "${QTDIR}/bin/" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" FILES_MATCHING PATTERN "Qt6Widgets.dll")
+        file(COPY "${QTDIR}/bin/" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" FILES_MATCHING PATTERN "Qt6Svg.dll")
     endif()
     file(REMOVE_RECURSE  "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug/")
 endif()

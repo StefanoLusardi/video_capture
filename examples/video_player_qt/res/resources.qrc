@@ -1,0 +1,17 @@
+<RCC>
+  <qresource prefix="dark">
+    <file alias="logo">dark/logo.svg</file>
+    <file alias="open">dark/open.svg</file>
+    <file alias="play">dark/play.svg</file>
+    <file alias="stop">dark/stop.svg</file>
+  </qresource>
+  <qresource prefix="icon">
+    <file alias="app_logo">app_logo.svg</file>
+  </qresource>
+  <qresource prefix="light">
+    <file alias="logo">light/logo.svg</file>
+    <file alias="open">light/open.svg</file>
+    <file alias="play">light/play.svg</file>
+    <file alias="stop">light/stop.svg</file>
+  </qresource>
+</RCC>

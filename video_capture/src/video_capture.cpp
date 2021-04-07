@@ -20,7 +20,8 @@ extern "C"
 namespace vc
 {
 video_capture::video_capture() 
-    : _logger{std::make_shared<vc::logger>()} 
+    : _is_initialized{ false }
+    , _logger{std::make_shared<vc::logger>()} 
     , _hw{std::make_unique<vc::hw_acceleration>(_logger)}
 {
     reset(); 
@@ -40,7 +41,7 @@ void video_capture::set_error_callback(const log_callback_t& cb) { _logger->set_
 
 bool video_capture::open(const std::string& filename, decode_support decode_preference)
 {
-    log_info(_logger, "AAA", "BBB");
+    //log_info(_logger, "AAA", "BBB");
 
     if(decode_preference == decode_support::HW)
         _decode_support = _hw->init();
@@ -139,15 +140,30 @@ bool video_capture::open(const std::string& filename, decode_support decode_pref
         }
     }
 
+    _is_initialized = true;
     return true;
 }
 
-auto video_capture::get_frame_size() const -> std::tuple<int, int>
+auto video_capture::get_frame_size() const -> std::optional<std::tuple<int, int>>
 {
-    if(_codec_ctx != nullptr)
-        return { _codec_ctx->width, _codec_ctx->height };
+    if(!_is_initialized)
+        return std::nullopt;
     
-    return {-1, -1};
+    auto size = std::make_tuple(_codec_ctx->width, _codec_ctx->height);
+    return std::make_optional(size);
+}
+
+auto video_capture::get_fps() const -> std::optional<double>
+{
+    if(!_is_initialized)
+        return std::nullopt;
+    
+    auto frame_rate = _format_ctx->streams[_stream_index]->avg_frame_rate;
+    if(frame_rate.num <= 0 || frame_rate.den <= 0 )
+        return std::nullopt;
+
+    auto fps = static_cast<double>(frame_rate.num) / static_cast<double>(frame_rate.den);
+    return std::make_optional(fps);
 }
 
 bool video_capture::grab()
@@ -227,8 +243,6 @@ bool video_capture::grab()
 
 bool video_capture::retrieve(uint8_t** data)
 {
-    // auto pts = _src_frame->pts;
-
     int w = _codec_ctx->width;
     int h = _codec_ctx->height;
     
@@ -337,6 +351,7 @@ void video_capture::release()
 
 void video_capture::reset()
 {
+    _is_initialized = false;
     _decode_support = decode_support::none;
     
     _format_ctx = nullptr;
@@ -350,7 +365,7 @@ void video_capture::reset()
     _sws_ctx = nullptr;
     _options = nullptr;
     _stream_index = -1;
-    _frame_pts = -1;    
+    _frame_pts = -1;
 }
 
 }

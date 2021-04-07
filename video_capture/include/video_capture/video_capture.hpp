@@ -14,8 +14,9 @@ struct AVBufferRef;
 #include <stdint.h>
 #include <vector>
 #include <functional>
-#include <map>
-#include <sstream>
+#include <map> // Todo: remove
+#include <sstream> // TODO: move in cpp
+#include <optional>
 
 /** 
  * The best thing to do in order to avoid color conversion in different toolkits
@@ -62,7 +63,8 @@ public:
     void set_error_callback(const log_callback_t& cb);
     
     bool open(const std::string& filename, decode_support decode_preference = decode_support::none);
-    auto get_frame_size() const -> std::tuple<int, int>;
+    auto get_frame_size() const -> std::optional<std::tuple<int, int>>;
+    auto get_fps() const -> std::optional<double>;
     bool next(uint8_t** data);
     void release();
 
@@ -73,6 +75,7 @@ protected:
     void reset();
 
 private:
+    bool _is_initialized;
     decode_support _decode_support;
 
     AVFormatContext* _format_ctx;
