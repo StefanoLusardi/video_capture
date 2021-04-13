@@ -40,6 +40,8 @@ add_executable(${TARGET_NAME} WIN32 MACOSX_BUNDLE
     res/resources.qrc
 )
 
+target_include_directories(${TARGET_NAME} PRIVATE src/)
+
 target_link_libraries(${TARGET_NAME} 
     PRIVATE video_capture 
     PRIVATE Qt6::Widgets

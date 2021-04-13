@@ -108,6 +108,7 @@ bool video_widget::stop()
         return false;
 
     _state = state::stop;
+    return true;
 }
 
 void video_widget::release()
