@@ -24,9 +24,11 @@ public:
     bool stop();
     bool is_playing() const;
     bool is_opened() const;
+    void set_smooth(bool smooth);
 
 signals:
     void refresh();
+    void started();
     void stopped();
 
 protected:
@@ -37,7 +39,8 @@ private:
     QImage _frame;
     std::thread _video_thread;
     state _state;
-    std::mutex _state_mutex;
+    Qt::TransformationMode _transformation_mode;
+    void release();
 };
 
 }

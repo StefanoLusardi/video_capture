@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QMainWindow>
+#include <QTimer>
 
 namespace Ui {
 class main_window;
@@ -21,15 +22,16 @@ public:
 
     void dragEnterEvent(QDragEnterEvent* event) override;
     void dropEvent(QDropEvent *event) override;
+    void closeEvent(QCloseEvent *event) override;
 
 private slots:
     void on_video_stopped();
+    void on_video_started();
     void on_video_path_changed(const QString& str);
     
 private:
     void toggle_player_state();
-    void open_video(const QString& file_name);
-
+    QTimer _player_timer;
     QIcon _play_icon;
     QIcon _stop_icon;
     Ui::main_window* _ui;

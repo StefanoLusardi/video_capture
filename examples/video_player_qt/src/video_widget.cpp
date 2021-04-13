@@ -22,7 +22,7 @@ void video_widget::paintEvent(QPaintEvent *e)
         return;
 
     QPainter p(this);
-    p.drawImage(0, 0, _frame.scaled(rect().size(), Qt::KeepAspectRatio));
+    p.drawImage(0, 0, _frame.scaled(rect().size(), Qt::KeepAspectRatio, _transformation_mode));
 }
 
 bool video_widget::open(const std::string& video_path, bool use_hw_accel)
@@ -47,11 +47,8 @@ bool video_widget::open(const std::string& video_path, bool use_hw_accel)
 
 bool video_widget::play()
 {
-    {
-        std::scoped_lock lock(_state_mutex);        
-        if(_state != state::open)
-            return false;
-    }
+    if(_state != state::open)
+        return false;
 
     auto size = _video_capture->get_frame_size(); 
     if(!size)
@@ -80,23 +77,25 @@ bool video_widget::play()
         uint8_t* frame_data = {};
         const auto [w, h] = size;
         const auto bytesPerLine = w * 3;
-        const auto sleep_time = std::chrono::milliseconds((int)fps);
+
+        const auto sleep_time = std::chrono::nanoseconds(static_cast<int>(1'000'000'000/fps));
         
+        emit started();
         while(true)
         {
-            {
-                std::scoped_lock lock(_state_mutex);                
-                if(_state != state::play || !_video_capture->next(&frame_data))
-                    break;
-                
-                _frame = QImage(frame_data, w, h, bytesPerLine, QImage::Format_BGR888);
-            }
+	        auto start_time = std::chrono::steady_clock::now();
+            if(_state != state::play || !_video_capture->next(&frame_data))
+                break;
+            
+            _frame = QImage(frame_data, w, h, bytesPerLine, QImage::Format_BGR888);
 
             emit refresh();
 
-            std::this_thread::sleep_for(sleep_time);
+            auto elapsed_time = std::chrono::steady_clock::now() - start_time;
+            std::this_thread::sleep_for(sleep_time - elapsed_time);
         }
         stop();
+        release();
     });
 
     _state = state::play;
@@ -104,27 +103,24 @@ bool video_widget::play()
 }
 
 bool video_widget::stop()
+{   
+    if(_state != state::play)
+        return false;
+
+    _state = state::stop;
+}
+
+void video_widget::release()
 {
-    {
-        std::scoped_lock lock(_state_mutex);
-        if(_state != state::play)
-            return false;
-
-        _state = state::stop;
-        _frame = QImage();
-    }
-
-    emit refresh();
-
     _video_capture->release();
+    _frame = QImage();
+    _state = state::init;
     emit stopped();
+}
 
-    {
-        std::scoped_lock lock(_state_mutex); 
-        _state = state::init;
-    }
-
-    return true;
+void video_widget::set_smooth(bool smooth)
+{
+    _transformation_mode = smooth ? Qt::SmoothTransformation : Qt::FastTransformation;
 }
 
 bool video_widget::is_playing() const

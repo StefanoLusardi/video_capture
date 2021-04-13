@@ -17,6 +17,13 @@ extern "C"
 #include <inttypes.h>
 }
 
+#define CHECK_ERROR(r, func) {                                  \
+    if (AVERROR(EAGAIN) == r)                                   \
+        continue;                                               \
+    _logger->log(log_level::error, func, _logger->err2str(r));  \
+    return false;                                               \
+}
+
 namespace vc
 {
 video_capture::video_capture() 
@@ -116,6 +123,15 @@ bool video_capture::open(const std::string& filename, decode_support decode_pref
         return false;
     }
 
+    // _src_frame->format = AV_PIX_FMT_BGR24;
+	// _src_frame->width  = _codec_ctx->width;
+	// _src_frame->height = _codec_ctx->height;
+    // if (auto r = av_frame_get_buffer(_src_frame, 0); r < 0)
+    // {
+    //     _logger->log(log_level::error, "av_frame_get_buffer", _logger->err2str(r));
+    //     return false;
+    // }
+
     if (_dst_frame = av_frame_alloc(); !_dst_frame)
     {
         _logger->log(log_level::error, "av_frame_alloc");
@@ -168,39 +184,23 @@ auto video_capture::get_fps() const -> std::optional<double>
 
 bool video_capture::grab()
 {
-    while(av_read_frame(_format_ctx, _packet) >= 0)
+    while(true)
     {
+        av_packet_unref(_packet);
+        if(auto r = av_read_frame(_format_ctx, _packet); r < 0)
+            CHECK_ERROR(r, "av_read_frame");
+
         if (_packet->stream_index != _stream_index)
-        {
-            av_packet_unref(_packet);
             continue;
-        }
 
         if (auto r = avcodec_send_packet(_codec_ctx, _packet); r < 0)
-        {
-            _logger->log(log_level::error, "avcodec_send_packet", _logger->err2str(r));
-            return false;
-        }
+            CHECK_ERROR(r, "avcodec_send_packet");
 
         if (auto r = avcodec_receive_frame(_codec_ctx, _src_frame); r < 0)
-        {
-            if (AVERROR_EOF == r || AVERROR(EAGAIN) == r)
-            {
-                av_packet_unref(_packet);
-                continue;
-            }
-            else
-            {
-                _logger->log(log_level::error, "avcodec_receive_frame", _logger->err2str(r));
-                return false;
-            }
-        }
+            CHECK_ERROR(r, "avcodec_receive_frame");
         
-        av_packet_unref(_packet);
         return true;
     }
-    
-    return false;
 }
 
 /*
@@ -245,7 +245,7 @@ bool video_capture::retrieve(uint8_t** data)
 {
     int w = _codec_ctx->width;
     int h = _codec_ctx->height;
-    
+
     _sws_ctx = sws_getCachedContext(_sws_ctx,
         w, h, (AVPixelFormat)_tmp_frame->format,
         w, h, AVPixelFormat::AV_PIX_FMT_BGR24,
@@ -257,6 +257,7 @@ bool video_capture::retrieve(uint8_t** data)
         return false;
     }
 
+    _dst_frame->linesize[0] = w*3;
     int dest_slice_h = sws_scale(_sws_ctx,
         _tmp_frame->data, _tmp_frame->linesize, 0, h,
         _dst_frame->data, _dst_frame->linesize);
