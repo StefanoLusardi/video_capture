@@ -59,9 +59,7 @@ void run_ffmpeg(const char* video_path, vc::decode_support decode_support, const
 
 int main(int argc, char** argv)
 {
-	auto video_path =
-	// "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov";
-	"C:/Users/StefanoLusardi/Desktop/test_4.mp4";
+	auto video_path = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov";
 	
 	// if (argc < 1)
 	// 	return -1;

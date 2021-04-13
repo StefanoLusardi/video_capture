@@ -5,15 +5,27 @@ extern "C"
 #include <libavutil/error.h>
 }
 
+#include <sstream>
+#include <utility>
+#include <functional>
+#include <cstring>
+#include <map>
+
+#if defined(VIDEO_CAPTURE_LOG_ENABLED)
+    #define log_info(logger, ...) logger->log(log_level::info, __DATE__, __FILE__, __LINE__, ##__VA_ARGS__)
+    #define log_error(logger, ...) logger->log(log_level::error, __DATE__, __FILE__, __LINE__, ##__VA_ARGS__)
+#else
+    #define log_info(logger, ...) (void)0
+    #define log_error(logger, ...) (void)0
+#endif
+
 namespace vc
 {
-enum class log_level { all, info, error };
-
-class logger
+class video_capture::logger
 {
 public:
     template<typename... Args>
-    void log(vc::log_level level, Args&& ...args)
+    void log(const log_level& level, Args&& ...args)
     {
         if(auto cb = log_callbacks.find(level); cb != log_callbacks.end())
         {
@@ -24,7 +36,7 @@ public:
     }
 
     using log_callback_t = std::function<void(const std::string&)>;
-    void set_log_callback(vc::log_level level, const log_callback_t& cb)
+    void set_log_callback(const log_callback_t& cb, const log_level& level)
     {
         if(level == log_level::all)
         {
@@ -36,16 +48,15 @@ public:
         log_callbacks[level] = cb;
     }
 
-    // const char* err2str(int errnum) const;
     const char* err2str(int errnum) const
     {
         static char str[AV_ERROR_MAX_STRING_SIZE];
-        memset(str, 0, sizeof(str));
+        std::memset(str, 0, sizeof(str));
         return av_make_error_string(str, AV_ERROR_MAX_STRING_SIZE, errnum);
     }
 
 private:
-    std::map<vc::log_level, log_callback_t> log_callbacks;
+    std::map<log_level, log_callback_t> log_callbacks;
 };
 
 }
