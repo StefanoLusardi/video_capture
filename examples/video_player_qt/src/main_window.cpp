@@ -8,6 +8,7 @@
 #include <QDropEvent>
 #include <QDragEnterEvent>
 #include <QMimeData>
+#include <QSettings>
 
 namespace qvp
 {
@@ -21,19 +22,15 @@ main_window::main_window(QWidget *parent)
     _play_icon.addFile(QString::fromUtf8(":/light/play"), QSize(), QIcon::Normal, QIcon::Off);
     _stop_icon.addFile(QString::fromUtf8(":/light/stop"), QSize(), QIcon::Normal, QIcon::Off);
 
-    _player_timer.setInterval(std::chrono::seconds(1));
-    connect(&_player_timer, &QTimer::timeout, this, [this](){ 
+    _timestamp_timer.setInterval(std::chrono::seconds(1));
+    connect(&_timestamp_timer, &QTimer::timeout, this, [this](){ 
         auto v = _ui->frame_counter->intValue(); 
         _ui->frame_counter->display(++v);
     });
 
     setAcceptDrops(true);
 
-    connect(_ui->video_path_search_button, &QAbstractButton::clicked, this, [this](bool){
-        const auto file_name = QFileDialog::getOpenFileName(this, "Open Video", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), "Video(*.mp4 *.mkv *.mov)");
-        _ui->video_path_entry->setText(file_name);
-    });
-
+    connect(_ui->video_path_search_button, &QAbstractButton::clicked, this, [this](bool b){ (void)b; on_video_opening(); });
     connect(_ui->video_player, &qvp::video_widget::started, this, [this](){ on_video_started(); });
     connect(_ui->video_player, &qvp::video_widget::stopped, this, [this](){ on_video_stopped(); });
     connect(_ui->video_play_button, &QAbstractButton::clicked, this, [this](bool){toggle_player_state(); });
@@ -46,16 +43,36 @@ main_window::~main_window()
     delete _ui;
 }
 
+void main_window::on_video_opening()
+{
+    const QString video_folder_key("video_folder_key");
+    QSettings video_folder_settings;
+
+    QString video_folder = video_folder_settings.value(video_folder_key).toString();
+    if(video_folder.isEmpty())    
+        video_folder = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
+
+    QString file_name = QFileDialog::getOpenFileName(this, "Open Video", video_folder, "Video(*.mp4 *.mkv *.mov)");
+    
+    if(!file_name.isEmpty())
+    {
+        QDir current_dir;
+        video_folder_settings.setValue(video_folder_key, current_dir.absoluteFilePath(file_name));
+    }
+
+    _ui->video_path_entry->setText(file_name);
+}
+
 void main_window::on_video_started()
 {
-    _player_timer.stop();
+    _timestamp_timer.stop();
     _ui->frame_counter->display(0);
-    _player_timer.start();
+    _timestamp_timer.start();
 }
 
 void main_window::on_video_stopped()
 {
-    _player_timer.stop();
+    _timestamp_timer.stop();
     _ui->frame_counter->display(0);    
     _ui->video_play_button->setText("Play");
     _ui->video_play_button->setIcon(_play_icon);

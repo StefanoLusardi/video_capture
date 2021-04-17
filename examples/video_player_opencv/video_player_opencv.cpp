@@ -29,7 +29,7 @@ int main(int argc, char** argv)
 	vc.set_log_callback(logger_info, vc::log_level::info);
 	vc.set_log_callback(logger_error, vc::log_level::error);
 
-	if(!vc.open(video_path))
+	if(!vc.open(video_path, vc::decode_support::SW))
 	{
 		std::cout << "Unable to open " << video_path << std::endl;
 		return -1;
@@ -53,32 +53,34 @@ int main(int argc, char** argv)
 	const auto [w, h] = size.value();
 	cv::Mat frame(h, w, CV_8UC3); 
 
-	// const auto sleep_time = static_cast<int>(1000.f/fps.value());
-	const auto sleep_time = std::chrono::nanoseconds(static_cast<int>(1'000'000'000/fps.value()));
-	// const auto sleep_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(sleep_time);
-	// auto start_time = std::chrono::steady_clock::now();
+	const auto sleep_time = std::chrono::milliseconds(static_cast<int>(1000/fps.value()));
+	
+	const std::string window_title = "FFMPEG Video Player with OpenCV UI";
+	cv::namedWindow(window_title);
+
+	auto start_time = std::chrono::steady_clock::now();
 	while(true)
 	{
-		auto start_time = std::chrono::steady_clock::now();
 		if(!vc.next(&frame.data))
 			break;
 
-
-		cv::imshow("FFMPEG Video Player with OpenCV UI", frame);
+		cv::imshow(window_title, frame);
 		cv::waitKey(1);
 
-		if(auto d = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time).count(); d > 16)
-			std::cout << "[D:] " << d << std::endl;
-
-		// auto elapsed_time = std::chrono::steady_clock::now() - start_time;
-		// if (elapsed_time < sleep_time)
-		// {
-		// 	auto wait_time = std::chrono::duration_cast<std::chrono::milliseconds>(sleep_time - elapsed_time);
-		// 	cv::waitKey(wait_time.count());
-		// }
-		// else
-		// 	cv::waitKey(1);
-		// start_time = std::chrono::steady_clock::now();
+		auto elapsed_time = std::chrono::steady_clock::now() - start_time;
+		if(elapsed_time > sleep_time)
+		{
+			// std::cout << "[D] " << elapsed_time.count() << std::endl;
+		}
+		else
+		{
+			// std::cout << "[OK]" << std::endl;
+			auto wait_time = sleep_time - elapsed_time;
+			std::this_thread::sleep_for(wait_time);
+			// auto wait_time = std::chrono::duration_cast<std::chrono::milliseconds>(sleep_time - elapsed_time).count();
+			// cv::waitKey(wait_time);
+		}
+		start_time = std::chrono::steady_clock::now();
 	}
 
 	vc.release();

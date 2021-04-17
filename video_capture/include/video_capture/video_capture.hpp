@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <chrono>
 
 struct AVFormatContext;
 struct AVCodecContext; 
@@ -34,10 +35,12 @@ public:
     using log_callback_t = std::function<void(const std::string&)>;
     void set_log_callback(const log_callback_t& cb, const log_level& level = log_level::all);    
     bool open(const std::string& video_path, decode_support decode_preference = decode_support::none);
-    auto get_frame_size() const -> std::optional<std::tuple<int, int>>;
-    auto get_fps() const -> std::optional<double>;
     bool next(uint8_t** data);
     void release();
+    
+    // auto video_capture::get_duration() const -> std::optional<std::chrono::microseconds>;
+    auto get_frame_size() const -> std::optional<std::tuple<int, int>>;
+    auto get_fps() const -> std::optional<double>;
 
 protected:
     bool grab();
@@ -60,6 +63,7 @@ private:
     SwsContext* _sws_ctx;
     AVDictionary* _options;
     int _stream_index;
+    double _timestamp_unit;
 
     std::shared_ptr<logger> _logger;
     std::unique_ptr<hw_acceleration> _hw;

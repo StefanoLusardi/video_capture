@@ -115,6 +115,12 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
         log_error(_logger, "av_packet_alloc");
         return false;
     }
+    
+    if (_tmp_frame = av_frame_alloc(); !_tmp_frame)
+    {
+        log_error(_logger, "av_frame_alloc");
+        return false;
+    }
 
     if (_src_frame = av_frame_alloc(); !_src_frame)
     {
@@ -137,19 +143,42 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
         return false;
     }
 
-    if(_decode_support == decode_support::HW)
-    {
-        if (_hw->hw_frame = av_frame_alloc(); !_hw->hw_frame)
-        {
-            log_error(_logger, "av_frame_alloc");
-            return false;
-        }
-    }
+    // if(_decode_support == decode_support::HW)
+    // {
+    //     if (_hw->hw_frame = av_frame_alloc(); !_hw->hw_frame)
+    //     {
+    //         log_error(_logger, "av_frame_alloc");
+    //         return false;
+    //     }
+    // }
 
-    log_info(_logger, "Opened video path:", video_path);
+    auto time_base = _format_ctx->streams[_stream_index]->time_base;
+    if(time_base.num <= 0 || time_base.den <= 0 )
+    {
+        log_info(_logger, "Unable to retrieve unit time for timestamps");
+        return false;
+    }
+    _timestamp_unit = static_cast<double>(time_base.num) / static_cast<double>(time_base.den);
+
     _is_initialized = true;
+    log_info(_logger, "Opened video path:", video_path);
+    log_info(_logger, "Frame Width:", _format_ctx->streams[_stream_index]->codec->width);
+    log_info(_logger, "Frame Height:", _format_ctx->streams[_stream_index]->codec->height);
+    log_info(_logger, "Frame Rate:", (get_fps() != std::nullopt ? get_fps().value() : -1));
+    log_info(_logger, "Duration:", _format_ctx->streams[_stream_index]->duration);
+    log_info(_logger, "Number of frames:", _format_ctx->streams[_stream_index]->nb_frames);
+
+    // auto dd = get_duration();
+    // auto ss = std::chrono::duration_cast<std::chrono::seconds>(dd.value());
+
     return true;
 }
+
+// auto video_capture::get_duration() const -> std::optional<std::chrono::microseconds>
+// {
+//     auto duration = std::chrono::duration<int64_t,std::ratio<1,AV_TIME_BASE>>(_format_ctx->duration);
+//     return std::make_optional(duration);
+// }
 
 auto video_capture::get_frame_size() const -> std::optional<std::tuple<int, int>>
 {
@@ -160,7 +189,6 @@ auto video_capture::get_frame_size() const -> std::optional<std::tuple<int, int>
     }
     
     auto size = std::make_tuple(_codec_ctx->width, _codec_ctx->height);
-    log_info(_logger, "Frame size - ", "w:", _codec_ctx->width, "h:", _codec_ctx->height);
     return std::make_optional(size);
 }
 
@@ -180,7 +208,6 @@ auto video_capture::get_fps() const -> std::optional<double>
     }
 
     auto fps = static_cast<double>(frame_rate.num) / static_cast<double>(frame_rate.den);
-    log_info(_logger, "FPS:", fps);
     return std::make_optional(fps);
 }
 
@@ -230,6 +257,9 @@ bool video_capture::retrieve(uint8_t** data)
     }
 
     *data = _dst_frame->data[0];
+    double sec = (_packet->dts - _format_ctx->streams[_stream_index]->start_time) * _timestamp_unit;
+    auto __pts = _packet->dts * _timestamp_unit;
+    auto picture_pts = _src_frame->pkt_pts != AV_NOPTS_VALUE && _src_frame->pkt_pts != 0 ? _src_frame->pkt_pts : _src_frame->pkt_dts;
     return true;
 }
 
@@ -237,12 +267,19 @@ bool video_capture::decode()
 {
     if (_src_frame->format == _hw->hw_pixel_format)
     {
-        if (auto r = av_hwframe_transfer_data(_hw->hw_frame, _src_frame, 0); r < 0)
+        if (auto r = av_hwframe_transfer_data(_tmp_frame, _src_frame, 0); r < 0)
+        // if (auto r = av_hwframe_transfer_data(_hw->hw_frame, _src_frame, 0); r < 0)
         {
             log_error(_logger, "av_hwframe_transfer_data", _logger->err2str(r));
             return false;
         }
-        _tmp_frame = _hw->hw_frame;
+
+        if (auto r = av_frame_copy_props(_tmp_frame, _src_frame); r < 0)
+        {
+            log_error(_logger, "av_frame_copy_props", _logger->err2str(r));
+            return false;
+        }
+        // _tmp_frame = _hw->hw_frame;
     }
     else
     {

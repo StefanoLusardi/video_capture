@@ -18,6 +18,11 @@ public:
         reset();
     }
     
+    ~hw_acceleration()
+    {
+        release();
+    }
+
     decode_support init()
     {
         auto get_hw_video_device_type = [this]() -> const char*
@@ -70,11 +75,11 @@ public:
             return decode_support::SW;
         }
 
-        if (hw_frame = av_frame_alloc(); !hw_frame)
-        {
-            _logger->log(log_level::error, "av_frame_alloc");
-            return decode_support::SW;
-        }
+        // if (hw_frame = av_frame_alloc(); !hw_frame)
+        // {
+        //     _logger->log(log_level::error, "av_frame_alloc");
+        //     return decode_support::SW;
+        // }
 
         // av_hwdevice_ctx_create_derived
 
@@ -101,8 +106,8 @@ public:
 
     void release()
     {
-        if(hw_frame)
-            av_frame_free(&hw_frame);
+        // if(hw_frame)
+        //     av_frame_free(&hw_frame);
         
         if(hw_frames_ctx)
             av_buffer_unref(&hw_frames_ctx);
@@ -117,16 +122,16 @@ public:
     {
         hw_device_ctx = nullptr;
         hw_frames_ctx = nullptr;
-        hw_frame = nullptr;
+        // hw_frame = nullptr;
         hw_pixel_format = -1;
     }
 
     AVBufferRef* hw_device_ctx;
     AVBufferRef* hw_frames_ctx;
-    AVFrame* hw_frame;
+    // AVFrame* hw_frame;
     int hw_pixel_format;
 
-private:
+protected:
     std::shared_ptr<logger> _logger;
 };
 

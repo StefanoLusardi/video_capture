@@ -25,13 +25,14 @@ public:
     void closeEvent(QCloseEvent *event) override;
 
 private slots:
+    void on_video_opening();
     void on_video_stopped();
     void on_video_started();
     void on_video_path_changed(const QString& str);
     
 private:
     void toggle_player_state();
-    QTimer _player_timer;
+    QTimer _timestamp_timer;
     QIcon _play_icon;
     QIcon _stop_icon;
     Ui::main_window* _ui;

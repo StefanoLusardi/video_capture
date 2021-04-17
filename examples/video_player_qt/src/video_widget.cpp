@@ -1,7 +1,7 @@
 #include "video_widget.hpp"
+
 #include <QPainter>
 #include <QDebug>
-#include <iostream>
 
 namespace qvp
 {
@@ -11,18 +11,24 @@ video_widget::video_widget(QWidget* parent)
     , _video_capture{std::make_unique<vc::video_capture>()}
     , _state{state::init}
 {
-    connect(this, &video_widget::refresh, this, [this](){repaint();});
+    connect(&_player_timer, &QTimer::timeout, this, [this](){ 
+        auto frame_data = _frames.get();
+        _current_frame = frame_data.second;
+        qDebug() << frame_data.first;
+
+        repaint(); 
+    });
 }
 
 void video_widget::paintEvent(QPaintEvent *e)
 {
     (void)e;
 
-    if(_frame.isNull())
+    if(!_frames.size())
         return;
 
     QPainter p(this);
-    p.drawImage(0, 0, _frame.scaled(rect().size(), Qt::KeepAspectRatio, _transformation_mode));
+    p.drawImage(0, 0, _current_frame.scaled(rect().size(), Qt::KeepAspectRatio, _transformation_mode));
 }
 
 bool video_widget::open(const std::string& video_path, bool use_hw_accel)
@@ -37,7 +43,7 @@ bool video_widget::open(const std::string& video_path, bool use_hw_accel)
 
     if(!_video_capture->open(video_path, decode_support))
     {
-      std::cout << "Unable to open " << video_path << std::endl;      
+      qDebug() << "Unable to open " << video_path.c_str();
       return false;
     }
 
@@ -53,21 +59,20 @@ bool video_widget::play()
     auto size = _video_capture->get_frame_size(); 
     if(!size)
     {
-        qDebug() <<  "Unable to retrieve frame size from video";
+        qDebug() << "Unable to retrieve frame size from video";
         return false;
     }    
 
     auto fps = _video_capture->get_fps(); 
     if(!fps)
     {            
-        qDebug() <<  "Unable to retrieve FPS from video";
-        
+        qDebug() <<  "Unable to retrieve FPS from video";        
         // In case of a video stream FPS is not available, so do not return.
-        //return false;
-
         // Default FPS to 1
         fps = 1;
     }
+
+    _frames.clear();
 
     _video_thread = std::thread([this, size=size.value(), fps=fps.value()]()
     {
@@ -78,27 +83,46 @@ bool video_widget::play()
         const auto [w, h] = size;
         const auto bytesPerLine = w * 3;
 
-        const auto sleep_time = std::chrono::nanoseconds(static_cast<int>(1'000'000'000/fps));
-        
         emit started();
+        
+        int i = 0;
         while(true)
         {
-	        auto start_time = std::chrono::steady_clock::now();
             if(_state != state::play || !_video_capture->next(&frame_data))
                 break;
             
-            _frame = QImage(frame_data, w, h, bytesPerLine, QImage::Format_BGR888);
-
-            emit refresh();
-
-            auto elapsed_time = std::chrono::steady_clock::now() - start_time;
-            std::this_thread::sleep_for(sleep_time - elapsed_time);
+            _frames.put({i, std::move(QImage(frame_data, w, h, bytesPerLine, QImage::Format_BGR888))});
+            ++i;
+            std::this_thread::yield();
         }
-        stop();
-        release();
+
+        emit stopped();
+
+        // const auto sleep_time = std::chrono::nanoseconds(static_cast<int>(1'000'000'000/fps));
+        // auto start_time = std::chrono::steady_clock::now();
+        // while(true)
+        // {
+        //     if(_state != state::play || !_video_capture->next(&frame_data))
+        //         break;            
+        //     _frames.put(std::move(QImage(frame_data, w, h, bytesPerLine, QImage::Format_BGR888)));
+        //     auto elapsed_time = std::chrono::steady_clock::now() - start_time;
+        //     if(elapsed_time < std::chrono::duration(sleep_time))
+        //     {
+        //         auto wait_time = sleep_time - elapsed_time;
+        //         std::this_thread::sleep_for(wait_time);
+        //     }
+        //     emit refresh();
+        //     start_time = std::chrono::steady_clock::now();
+        // }
+        //stop();
+        //release();
     });
 
     _state = state::play;
+    // _player_timer.setInterval(static_cast<int>(1000));
+    _player_timer.setInterval(static_cast<int>(1000/fps.value()));
+    _player_timer.start();
+    
     return true;
 }
 
@@ -108,15 +132,14 @@ bool video_widget::stop()
         return false;
 
     _state = state::stop;
+    _player_timer.stop();
     return true;
 }
 
 void video_widget::release()
 {
     _video_capture->release();
-    _frame = QImage();
     _state = state::init;
-    emit stopped();
 }
 
 void video_widget::set_smooth(bool smooth)
