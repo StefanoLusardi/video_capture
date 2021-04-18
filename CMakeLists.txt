@@ -30,8 +30,9 @@ include(${CMAKE_BINARY_DIR}/conan.cmake)
 
 add_subdirectory(video_capture)
 
-option(VC_BUILD_TESTS "Build library tests" ON)
+option(VC_BUILD_TESTS "Build library tests" OFF)
 option(VC_BUILD_EXAMPLES "Build library examples" ON)
+option(USE_SYSTEM_FFMPEG "Use system FFMPEG" OFF)
 
 if(${VC_BUILD_TESTS})
     add_subdirectory(tests)
