@@ -11,7 +11,7 @@
 #include <QImage>
 #include <QTimer>
 
-#include "frame_queue.hpp"
+#include "../src/frame_queue.hpp"
 
 namespace qvp
 {
@@ -46,6 +46,8 @@ private:
     QTimer _player_timer;
     Qt::TransformationMode _transformation_mode;
     void release();
+
+    std::chrono::high_resolution_clock::time_point _start;
 };
 
 }

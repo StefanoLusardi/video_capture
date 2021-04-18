@@ -16,7 +16,8 @@ int main(int argc, char** argv)
 	{
 		std::cout << "Missing video file path." << std::endl;
 		std::cout << "Usage: \nvideo_player_opencv <VIDEO_PATH>" << std::endl;
-		video_path = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov";
+		video_path = "../../../../tests/data/testsrc_10sec_4fps.mkv";
+		// video_path = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov";
 		std::cout << "Using default RTSP video stream: " << video_path << std::endl;
 	}
 	else
@@ -26,8 +27,8 @@ int main(int argc, char** argv)
 	}
 
 	vc::video_capture vc;
-	vc.set_log_callback(logger_info, vc::log_level::info);
-	vc.set_log_callback(logger_error, vc::log_level::error);
+	// vc.set_log_callback(logger_info, vc::log_level::info);
+	// vc.set_log_callback(logger_error, vc::log_level::error);
 
 	if(!vc.open(video_path, vc::decode_support::SW))
 	{
@@ -53,35 +54,34 @@ int main(int argc, char** argv)
 	const auto [w, h] = size.value();
 	cv::Mat frame(h, w, CV_8UC3); 
 
-	const auto sleep_time = std::chrono::milliseconds(static_cast<int>(1000/fps.value()));
+	const auto frame_time = std::chrono::milliseconds(static_cast<int>(1'000/fps.value()));
+	// const auto frame_time = std::chrono::nanoseconds(static_cast<int>(1'000'000'000/fps.value()));
 	
 	const std::string window_title = "FFMPEG Video Player with OpenCV UI";
 	cv::namedWindow(window_title);
 
-	auto start_time = std::chrono::steady_clock::now();
+	int n_frames = 0;
+	auto total_start_time = std::chrono::high_resolution_clock::now();
+
+	auto decoding_start_time = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now());
 	while(true)
 	{
 		if(!vc.next(&frame.data))
-			break;
+			break;		
 
 		cv::imshow(window_title, frame);
 		cv::waitKey(1);
+		++n_frames;
 
-		auto elapsed_time = std::chrono::steady_clock::now() - start_time;
-		if(elapsed_time > sleep_time)
-		{
-			// std::cout << "[D] " << elapsed_time.count() << std::endl;
-		}
-		else
-		{
-			// std::cout << "[OK]" << std::endl;
-			auto wait_time = sleep_time - elapsed_time;
-			std::this_thread::sleep_for(wait_time);
-			// auto wait_time = std::chrono::duration_cast<std::chrono::milliseconds>(sleep_time - elapsed_time).count();
-			// cv::waitKey(wait_time);
-		}
-		start_time = std::chrono::steady_clock::now();
+		auto decoding_end_time = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now());
+		auto decoding_time = decoding_end_time - decoding_start_time;
+		std::this_thread::sleep_for(frame_time - decoding_time);
+		decoding_start_time = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now());
 	}
+
+	auto total_end_time = std::chrono::high_resolution_clock::now();
+	std::cout << "Decode time: " << std::chrono::duration_cast<std::chrono::milliseconds>(total_end_time - total_start_time).count() << "ms" << std::endl;
+	std::cout << "Decoded Frames: " << n_frames << std::endl;
 
 	vc.release();
 	cv::destroyAllWindows();
