@@ -15,17 +15,6 @@ extern "C"
 #include <libavutil/hwcontext.h>
 }
 
-#define CHECK_ERROR(r, func) {                          \
-    if (AVERROR(EAGAIN) == r)                           \
-        continue;                                       \
-    if(AVERROR_EOF == r) {                              \
-        log_info(_logger, func, _logger->err2str(r));   \
-        return false;                                   \
-    }                                                   \
-    log_error(_logger, func, _logger->err2str(r));      \
-    return false;                                       \
-}
-
 namespace vc
 {
 video_capture::video_capture() 
@@ -137,48 +126,56 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
     _dst_frame->format = AV_PIX_FMT_BGR24;
 	_dst_frame->width  = _codec_ctx->width;
 	_dst_frame->height = _codec_ctx->height;
+    // if (auto r = av_frame_get_buffer(_dst_frame, 24); r < 0)
     if (auto r = av_frame_get_buffer(_dst_frame, 0); r < 0)
     {
         log_error(_logger, "av_frame_get_buffer", _logger->err2str(r));
         return false;
     }
 
-    // if(_decode_support == decode_support::HW)
-    // {
-    //     if (_hw->hw_frame = av_frame_alloc(); !_hw->hw_frame)
-    //     {
-    //         log_error(_logger, "av_frame_alloc");
-    //         return false;
-    //     }
-    // }
-
-    auto time_base = _format_ctx->streams[_stream_index]->time_base;
-    if(time_base.num <= 0 || time_base.den <= 0 )
-    {
-        log_info(_logger, "Unable to retrieve unit time for timestamps");
-        return false;
-    }
-    _timestamp_unit = static_cast<double>(time_base.num) / static_cast<double>(time_base.den);
-
     _is_initialized = true;
     log_info(_logger, "Opened video path:", video_path);
     log_info(_logger, "Frame Width:", _format_ctx->streams[_stream_index]->codec->width);
     log_info(_logger, "Frame Height:", _format_ctx->streams[_stream_index]->codec->height);
     log_info(_logger, "Frame Rate:", (get_fps() != std::nullopt ? get_fps().value() : -1));
-    log_info(_logger, "Duration:", _format_ctx->streams[_stream_index]->duration);
-    log_info(_logger, "Number of frames:", _format_ctx->streams[_stream_index]->nb_frames);
-
-    // auto dd = get_duration();
-    // auto ss = std::chrono::duration_cast<std::chrono::seconds>(dd.value());
+    log_info(_logger, "Duration:", (get_duration() != std::nullopt ? get_duration().value().count() : -1));
+    log_info(_logger, "Number of frames:", (get_frame_count() != std::nullopt ? get_frame_count().value() : -1));
 
     return true;
 }
 
-// auto video_capture::get_duration() const -> std::optional<std::chrono::microseconds>
-// {
-//     auto duration = std::chrono::duration<int64_t,std::ratio<1,AV_TIME_BASE>>(_format_ctx->duration);
-//     return std::make_optional(duration);
-// }
+auto video_capture::get_frame_count() const -> std::optional<int>
+{
+    if(!_is_initialized)
+    {
+        log_error(_logger, "Frame count not available. Video path must be opened first.");
+        return std::nullopt;
+    }
+
+    auto nb_frames = _format_ctx->streams[_stream_index]->nb_frames;
+    if (!nb_frames)
+    {
+        double duration_sec = (double)_format_ctx->duration / (double)AV_TIME_BASE;
+        auto fps = get_fps();
+        nb_frames = (int64_t)std::floor(duration_sec * fps.value() + 0.5);
+    }
+    if (nb_frames)
+        return std::make_optional(static_cast<int>(nb_frames));
+    
+    return std::nullopt;
+}
+
+auto video_capture::get_duration() const -> std::optional<std::chrono::high_resolution_clock::duration>
+{
+    if(!_is_initialized)
+    {
+        log_error(_logger, "Duration not available. Video path must be opened first.");
+        return std::nullopt;
+    }
+
+    auto duration = std::chrono::duration<int64_t, std::ratio<1, AV_TIME_BASE>>(_format_ctx->duration);
+    return std::make_optional(duration);
+}
 
 auto video_capture::get_frame_size() const -> std::optional<std::tuple<int, int>>
 {
@@ -211,25 +208,80 @@ auto video_capture::get_fps() const -> std::optional<double>
     return std::make_optional(fps);
 }
 
+bool video_capture::is_error(const char* func_name, const int error) const
+{
+    if(AVERROR_EOF == error) 
+    {
+        log_info(_logger, func_name, _logger->err2str(error));
+        return false;
+    }
+    
+    log_error(_logger, func_name, _logger->err2str(error));  
+    return true;    
+}
+
 bool video_capture::grab()
 {
     while(true)
     {
         av_packet_unref(_packet);
         if(auto r = av_read_frame(_format_ctx, _packet); r < 0)
-            CHECK_ERROR(r, "av_read_frame");
+        {
+            if (AVERROR(EAGAIN) == r)
+                continue; 
+
+            if(is_error("av_read_frame", r))
+                return false;
+        }
 
         if (_packet->stream_index != _stream_index)
             continue;
 
         if (auto r = avcodec_send_packet(_codec_ctx, _packet); r < 0)
-            CHECK_ERROR(r, "avcodec_send_packet");
+        {
+            if (AVERROR(EAGAIN) == r)                         
+                continue; 
+            
+            if(is_error("avcodec_send_packet", r))
+                return false;
+        }
 
         if (auto r = avcodec_receive_frame(_codec_ctx, _src_frame); r < 0)
-            CHECK_ERROR(r, "avcodec_receive_frame");
+        {
+            if (AVERROR(EAGAIN) == r)                         
+                continue; 
+            
+            is_error("avcodec_receive_frame", r);
+            release();
+            return false;
+        }
         
         return true;
     }
+}
+
+bool video_capture::decode()
+{
+    if (_src_frame->format == _hw->hw_pixel_format)
+    {
+        if (auto r = av_hwframe_transfer_data(_tmp_frame, _src_frame, 0); r < 0)
+        {
+            log_error(_logger, "av_hwframe_transfer_data", _logger->err2str(r));
+            return false;
+        }
+
+        if (auto r = av_frame_copy_props(_tmp_frame, _src_frame); r < 0)
+        {
+            log_error(_logger, "av_frame_copy_props", _logger->err2str(r));
+            return false;
+        }
+    }
+    else
+    {
+        _tmp_frame = _src_frame;
+    }
+
+    return true;
 }
 
 bool video_capture::retrieve(uint8_t** data)
@@ -257,35 +309,6 @@ bool video_capture::retrieve(uint8_t** data)
     }
 
     *data = _dst_frame->data[0];
-    double sec = (_packet->dts - _format_ctx->streams[_stream_index]->start_time) * _timestamp_unit;
-    auto __pts = _packet->dts * _timestamp_unit;
-    auto picture_pts = _src_frame->pkt_pts != AV_NOPTS_VALUE && _src_frame->pkt_pts != 0 ? _src_frame->pkt_pts : _src_frame->pkt_dts;
-    return true;
-}
-
-bool video_capture::decode()
-{
-    if (_src_frame->format == _hw->hw_pixel_format)
-    {
-        if (auto r = av_hwframe_transfer_data(_tmp_frame, _src_frame, 0); r < 0)
-        // if (auto r = av_hwframe_transfer_data(_hw->hw_frame, _src_frame, 0); r < 0)
-        {
-            log_error(_logger, "av_hwframe_transfer_data", _logger->err2str(r));
-            return false;
-        }
-
-        if (auto r = av_frame_copy_props(_tmp_frame, _src_frame); r < 0)
-        {
-            log_error(_logger, "av_frame_copy_props", _logger->err2str(r));
-            return false;
-        }
-        // _tmp_frame = _hw->hw_frame;
-    }
-    else
-    {
-        _tmp_frame = _src_frame;
-    }
-
     return true;
 }
 
@@ -302,6 +325,9 @@ bool video_capture::next(uint8_t** data)
 
 void video_capture::release()
 {
+    if(!_is_initialized)
+        return;
+
     log_info(_logger, "Release video capture");
 
     if(_sws_ctx)

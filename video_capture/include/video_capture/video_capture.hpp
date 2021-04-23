@@ -16,7 +16,7 @@ struct AVDictionary;
 struct SwsContext;
 struct AVBufferRef;
 
-#define VIDEO_CAPTURE_LOG_ENABLED 1
+#define VIDEO_CAPTURE_LOG_ENABLED 0
 
 namespace vc
 {
@@ -38,15 +38,17 @@ public:
     bool next(uint8_t** data);
     void release();
     
-    // auto video_capture::get_duration() const -> std::optional<std::chrono::microseconds>;
+    auto get_frame_count() const -> std::optional<int>;
+    auto get_duration() const -> std::optional<std::chrono::high_resolution_clock::duration>;
     auto get_frame_size() const -> std::optional<std::tuple<int, int>>;
     auto get_fps() const -> std::optional<double>;
 
 protected:
     bool grab();
-    bool retrieve(uint8_t** data);
     bool decode();
+    bool retrieve(uint8_t** data);
     void reset();
+    bool is_error(const char* func_name, const int error) const;
 
 private:
     bool _is_initialized;
