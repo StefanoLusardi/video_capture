@@ -1,4 +1,5 @@
 #include "video_widget.hpp"
+#include <video_capture/frame_sync.hpp>
 
 #include <QPainter>
 #include <QDebug>
@@ -11,21 +12,26 @@ video_widget::video_widget(QWidget* parent)
     , _video_capture{std::make_unique<vc::video_capture>()}
     , _state{state::init}
 {
-    connect(&_player_timer, &QTimer::timeout, this, [this](){ 
-        auto frame_data = _frames.get();
-        _current_frame = frame_data.second;
-        qDebug() << frame_data.first;
+    connect(this, &video_widget::refresh, this, [this](){ repaint(); });
 
-        repaint(); 
-    });
+    // connect(&_player_timer, &QTimer::timeout, this, [this](){ 
+    //     auto frame_data = _frames.get();
+    //     _current_frame = frame_data.second;
+    //     qDebug() << frame_data.first;
+
+    //     repaint(); 
+    // });
 }
 
 void video_widget::paintEvent(QPaintEvent *e)
 {
     (void)e;
 
-    if(!_frames.size())
+    if (_current_frame.isNull())
         return;
+
+    // if(!_frames.size())
+    //     return;
 
     QPainter p(this);
     p.drawImage(0, 0, _current_frame.scaled(rect().size(), Qt::KeepAspectRatio, _transformation_mode));
@@ -72,7 +78,7 @@ bool video_widget::play()
         fps = 1;
     }
 
-    _frames.clear();
+    // _frames.clear();
 
     _video_thread = std::thread([this, size=size.value(), fps=fps.value()]()
     {
@@ -85,15 +91,18 @@ bool video_widget::play()
 
         emit started();
         
-        int i = 0;
+        const auto frame_time = std::chrono::nanoseconds(static_cast<int>(1'000'000'000/fps));
+        vc::frame_sync fs = vc::frame_sync(frame_time);
+	    fs.start();
+
         while(true)
         {
             if(_state != state::play || !_video_capture->next(&frame_data))
                 break;
             
-            _frames.put({i, std::move(QImage(frame_data, w, h, bytesPerLine, QImage::Format_BGR888))});
-            ++i;
-            std::this_thread::yield();
+            _current_frame = std::move(QImage(frame_data, w, h, bytesPerLine, QImage::Format_BGR888));
+            emit refresh();
+            fs.update();
         }
 
         emit stopped();
@@ -120,8 +129,8 @@ bool video_widget::play()
 
     _state = state::play;
     // _player_timer.setInterval(static_cast<int>(1000));
-    _player_timer.setInterval(static_cast<int>(1000/fps.value()));
-    _player_timer.start();
+    // _player_timer.setInterval(static_cast<int>(1000/fps.value()));
+    // _player_timer.start();
     
     return true;
 }
@@ -132,7 +141,7 @@ bool video_widget::stop()
         return false;
 
     _state = state::stop;
-    _player_timer.stop();
+    // _player_timer.stop();
     return true;
 }
 

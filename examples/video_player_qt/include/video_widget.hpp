@@ -39,7 +39,7 @@ protected:
 
 private:
     std::unique_ptr<vc::video_capture> _video_capture;
-    frame_queue<QPair<int, QImage>> _frames;
+    // frame_queue<QPair<int, QImage>> _frames;
     QImage _current_frame;
     std::thread _video_thread;
     state _state;

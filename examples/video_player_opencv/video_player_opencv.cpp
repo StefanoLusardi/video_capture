@@ -3,7 +3,8 @@
 #include <thread>
 
 #define VIDEO_CAPTURE_LOG_ENABLED 1
-#include <video_capture/video_capture.hpp> // Custom FFMPEG backend
+#include <video_capture/video_capture.hpp> 
+#include <video_capture/frame_sync.hpp>
 #include <opencv2/highgui.hpp> // OpenCV GUI
 
 void log_info(const std::string& str)  { std::cout << "[  INFO ] " << str << std::endl; }
@@ -90,7 +91,7 @@ int main(int argc, char** argv)
 		std::cout << "Using video file: " << video_path << std::endl;
 	}
 
-	video_path = "../../../../tests/data/testsrc_120sec_30fps.mkv";
+	video_path = "../../../../tests/data/testsrc_10sec_30fps.mkv";
 
 	vc::video_capture vc;
 	vc.set_log_callback(log_info, vc::log_level::info);
@@ -129,8 +130,11 @@ int main(int argc, char** argv)
 	int n_frames = 0;
 	auto total_start_time = std::chrono::high_resolution_clock::now();
 
-	auto decoding_start_time = std::chrono::high_resolution_clock::now();
-	// auto decoding_start_time = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now());
+	vc::frame_sync fs = vc::frame_sync(frame_time);
+
+	// auto decoding_start_time = std::chrono::high_resolution_clock::now();
+
+	fs.start();
 	while(true)
 	{
 		if(!vc.next(&frame.data))
@@ -140,15 +144,13 @@ int main(int argc, char** argv)
 		cv::waitKey(1);
 		++n_frames;
 
-		auto decoding_end_time = std::chrono::high_resolution_clock::now();
-		// auto decoding_end_time = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now());
-		auto decoding_time = decoding_end_time - decoding_start_time;
-		auto sleep_time = frame_time - decoding_time;
-		sleep(sleep_time);
-		// sleep(sleep_time.count()/1'000'000'000.0);
-		// std::this_thread::sleep_for(sleep_time);
-		decoding_start_time = std::chrono::high_resolution_clock::now();
-		// decoding_start_time = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now());
+		fs.update();
+
+		// auto decoding_end_time = std::chrono::high_resolution_clock::now();
+		// auto decoding_time = decoding_end_time - decoding_start_time;
+		// auto sleep_time = frame_time - decoding_time;
+		// sleep(sleep_time);
+		// decoding_start_time = std::chrono::high_resolution_clock::now();
 	}
 
 	auto total_end_time = std::chrono::high_resolution_clock::now();

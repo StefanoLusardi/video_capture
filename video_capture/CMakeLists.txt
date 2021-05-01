@@ -4,7 +4,7 @@ message("::VideoCapture:: Library")
 message("")
 
 set(PROJECT_NAME video_capture)
-add_library(${PROJECT_NAME} SHARED src/video_capture.cpp)
+add_library(${PROJECT_NAME} SHARED src/video_capture.cpp src/frame_sync.cpp)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE LIB_VIDEO_CAPTURE)
 
