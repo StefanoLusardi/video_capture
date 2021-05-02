@@ -1,5 +1,6 @@
 #include <frame_sync.hpp>
 #include <thread>
+#include <cmath>
 
 namespace vc
 {
@@ -50,7 +51,7 @@ void frame_sync::sleep(std::chrono::high_resolution_clock::duration remaining_sl
         auto delta = measured_sleep - avg_sleep_time;
         avg_sleep_time += delta / count;
         m2   += delta.count() * (measured_sleep - avg_sleep_time);
-        double stddev = sqrt(m2.count() / (count - 1));
+        double stddev = std::sqrt(m2.count() / (count - 1));
         estimate_sleep_time = avg_sleep_time + std::chrono::nanoseconds((int)stddev);
     }
 

@@ -10,70 +10,6 @@
 void log_info(const std::string& str)  { std::cout << "[  INFO ] " << str << std::endl; }
 void log_error(const std::string& str) { std::cout << "[ ERROR ] " << str << std::endl; }
 
-void sleep(std::chrono::high_resolution_clock::duration remaining_sleep_time) 
-{
-    using namespace std;
-    using namespace chrono;
-
-    static std::chrono::high_resolution_clock::duration estimate_sleep_time = milliseconds(1);
-    static std::chrono::high_resolution_clock::duration avg_sleep_time = milliseconds(1);
-    static std::chrono::high_resolution_clock::duration m2 = milliseconds(0);
-    static int64_t count = 1;
-
-    while (remaining_sleep_time > estimate_sleep_time)
-	{
-        auto start = high_resolution_clock::now();
-        this_thread::sleep_for(milliseconds(1));
-        auto end = high_resolution_clock::now();
-
-        auto measured_sleep = end - start;
-        remaining_sleep_time -= measured_sleep;
-
-        ++count;
-        auto delta = measured_sleep - avg_sleep_time;
-        avg_sleep_time += delta / count;
-		m2   += delta.count() * (measured_sleep - avg_sleep_time);
-        double stddev = sqrt(m2.count() / (count - 1));
-        estimate_sleep_time = avg_sleep_time + std::chrono::nanoseconds((int)stddev);
-    }
-
-    auto start_spin_lock = high_resolution_clock::now();
-    while (high_resolution_clock::now() - start_spin_lock < remaining_sleep_time)
-		; // spin lock
-}
-
-void sleep(double seconds) 
-{
-    using namespace std;
-    using namespace chrono;
-
-    static double estimate = 5e-3;
-    static double mean = 5e-3;
-    static double m2 = 0;
-    static int64_t count = 1;
-
-    while (seconds > estimate)
-	{
-        auto start = high_resolution_clock::now();
-        this_thread::sleep_for(milliseconds(1));
-        auto end = high_resolution_clock::now();
-
-        double observed = (end - start).count() / 1e9;
-        seconds -= observed;
-
-        ++count;
-        double delta = observed - mean;
-        mean += delta / count;
-        m2   += delta * (observed - mean);
-        double stddev = sqrt(m2 / (count - 1));
-        estimate = mean + stddev;
-    }
-
-    // spin lock
-    auto start = high_resolution_clock::now();
-    while ((high_resolution_clock::now() - start).count() / 1e9 < seconds);
-}
-
 int main(int argc, char** argv)
 {
 	std::string video_path;
@@ -91,7 +27,7 @@ int main(int argc, char** argv)
 		std::cout << "Using video file: " << video_path << std::endl;
 	}
 
-	video_path = "../../../../tests/data/testsrc_10sec_30fps.mkv";
+	video_path = "../../../../tests/data/testsrc_120sec_30fps.mkv";
 
 	vc::video_capture vc;
 	vc.set_log_callback(log_info, vc::log_level::info);
@@ -121,7 +57,6 @@ int main(int argc, char** argv)
 	const auto [w, h] = size.value();
 	cv::Mat frame(h, w, CV_8UC3); 
 
-	// const auto frame_time = std::chrono::milliseconds(static_cast<int>(1'000/fps.value()));
 	const auto frame_time = std::chrono::nanoseconds(static_cast<int>(1'000'000'000/fps.value()));
 	
 	const std::string window_title = "FFMPEG Video Player with OpenCV UI";
@@ -131,8 +66,6 @@ int main(int argc, char** argv)
 	auto total_start_time = std::chrono::high_resolution_clock::now();
 
 	vc::frame_sync fs = vc::frame_sync(frame_time);
-
-	// auto decoding_start_time = std::chrono::high_resolution_clock::now();
 
 	fs.start();
 	while(true)
@@ -145,12 +78,6 @@ int main(int argc, char** argv)
 		++n_frames;
 
 		fs.update();
-
-		// auto decoding_end_time = std::chrono::high_resolution_clock::now();
-		// auto decoding_time = decoding_end_time - decoding_start_time;
-		// auto sleep_time = frame_time - decoding_time;
-		// sleep(sleep_time);
-		// decoding_start_time = std::chrono::high_resolution_clock::now();
 	}
 
 	auto total_end_time = std::chrono::high_resolution_clock::now();

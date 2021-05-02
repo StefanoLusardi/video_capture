@@ -13,14 +13,6 @@ video_widget::video_widget(QWidget* parent)
     , _state{state::init}
 {
     connect(this, &video_widget::refresh, this, [this](){ repaint(); });
-
-    // connect(&_player_timer, &QTimer::timeout, this, [this](){ 
-    //     auto frame_data = _frames.get();
-    //     _current_frame = frame_data.second;
-    //     qDebug() << frame_data.first;
-
-    //     repaint(); 
-    // });
 }
 
 void video_widget::paintEvent(QPaintEvent *e)
@@ -105,6 +97,7 @@ bool video_widget::play()
             fs.update();
         }
 
+        _current_frame = QImage();
         emit stopped();
 
         // const auto sleep_time = std::chrono::nanoseconds(static_cast<int>(1'000'000'000/fps));
