@@ -9,9 +9,9 @@ class API_VIDEO_CAPTURE frame_sync
 {
 public:
     explicit frame_sync(std::chrono::high_resolution_clock::duration tick);
-    ~frame_sync();
+    ~frame_sync() = default;
     void start();
-    void stop();
+    void reset();
     void update();
 
 private:
@@ -21,7 +21,7 @@ private:
     std::chrono::high_resolution_clock::duration estimate_sleep_time = std::chrono::milliseconds(1);
     std::chrono::high_resolution_clock::duration avg_sleep_time = std::chrono::milliseconds(1);
     std::chrono::high_resolution_clock::duration m2 = std::chrono::milliseconds(0);
-    int64_t count = 1;
+    int count = 1;
 
     void sleep(std::chrono::high_resolution_clock::duration remaining_sleep_time);
 };

@@ -35,7 +35,6 @@ add_executable(${TARGET_NAME} WIN32 MACOSX_BUNDLE
     src/main_window.ui
     src/main_window.cpp
     src/video_widget.cpp
-    src/frame_queue.hpp
     include/main_window.hpp
     include/video_widget.hpp
     res/resources.qrc

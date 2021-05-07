@@ -135,10 +135,10 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
 
     _is_initialized = true;
     log_info(_logger, "Opened video path:", video_path);
-    log_info(_logger, "Frame Width:", _format_ctx->streams[_stream_index]->codec->width);
-    log_info(_logger, "Frame Height:", _format_ctx->streams[_stream_index]->codec->height);
-    log_info(_logger, "Frame Rate:", (get_fps() != std::nullopt ? get_fps().value() : -1));
-    log_info(_logger, "Duration:", (get_duration() != std::nullopt ? get_duration().value().count() : -1));
+    log_info(_logger, "Frame Width:", _format_ctx->streams[_stream_index]->codec->width, "px");
+    log_info(_logger, "Frame Height:", _format_ctx->streams[_stream_index]->codec->height, "px");
+    log_info(_logger, "Frame Rate:", (get_fps() != std::nullopt ? get_fps().value() : -1), "fps");
+    log_info(_logger, "Duration:", (get_duration() != std::nullopt ? std::chrono::duration_cast<std::chrono::seconds>(get_duration().value()).count() : -1), "sec");
     log_info(_logger, "Number of frames:", (get_frame_count() != std::nullopt ? get_frame_count().value() : -1));
 
     return true;
@@ -251,7 +251,7 @@ bool video_capture::grab()
             if (AVERROR(EAGAIN) == r)                         
                 continue; 
             
-            is_error("avcodec_receive_frame", r);
+            log_info(_logger, "avcodec_receive_frame", _logger->err2str(r));
             release();
             return false;
         }

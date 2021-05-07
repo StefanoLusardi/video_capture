@@ -7,11 +7,7 @@ namespace vc
 frame_sync::frame_sync(std::chrono::high_resolution_clock::duration tick)
 {
     frame_time = tick;
-}
-
-frame_sync::~frame_sync()
-{
-    stop();
+    reset();
 }
 
 void frame_sync::start()
@@ -19,7 +15,7 @@ void frame_sync::start()
     decoding_start_time = std::chrono::high_resolution_clock::now();
 }
 
-void frame_sync::stop()
+void frame_sync::reset()
 {
     estimate_sleep_time = std::chrono::milliseconds(1);
     avg_sleep_time = std::chrono::milliseconds(1);
@@ -51,7 +47,7 @@ void frame_sync::sleep(std::chrono::high_resolution_clock::duration remaining_sl
         auto delta = measured_sleep - avg_sleep_time;
         avg_sleep_time += delta / count;
         m2   += delta.count() * (measured_sleep - avg_sleep_time);
-        double stddev = std::sqrt(m2.count() / (count - 1));
+        double stddev = sqrt(m2.count() / (count - 1));
         estimate_sleep_time = avg_sleep_time + std::chrono::nanoseconds((int)stddev);
     }
 
