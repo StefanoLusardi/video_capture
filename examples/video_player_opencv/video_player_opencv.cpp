@@ -2,7 +2,7 @@
 #include <iostream>
 #include <thread>
 
-#define VIDEO_CAPTURE_LOG_ENABLED 1
+// #define VIDEO_CAPTURE_LOG_ENABLED 1
 #include <video_capture/video_capture.hpp> 
 #include <video_capture/frame_sync.hpp>
 #include <opencv2/highgui.hpp> // OpenCV GUI

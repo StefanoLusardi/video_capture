@@ -1,6 +1,6 @@
 #pragma once
 
-#define VIDEO_CAPTURE_LOG_ENABLED 1
+// #define VIDEO_CAPTURE_LOG_ENABLED 1
 #include <video_capture/video_capture.hpp>
 
 #include <memory>
@@ -11,7 +11,7 @@
 #include <QImage>
 #include <QTimer>
 
-#include "../src/frame_queue.hpp"
+#include <video_capture/frame_queue.hpp>
 
 namespace qvp
 {

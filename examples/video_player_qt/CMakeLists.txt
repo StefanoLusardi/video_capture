@@ -19,6 +19,8 @@ set(TARGET_NAME video_player_qt)
 # list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR}/examples/${TARGET_NAME})
 # list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR}/examples/${TARGET_NAME})
 
+#set(ENV{QTDIR} "/home/stefano/Qt/6.1.0/gcc_64")
+
 if(EXISTS "$ENV{QTDIR}")
     file(TO_CMAKE_PATH "$ENV{QTDIR}" QTDIR)
     list(APPEND CMAKE_PREFIX_PATH ${QTDIR})

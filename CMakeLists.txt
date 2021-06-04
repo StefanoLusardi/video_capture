@@ -1,4 +1,4 @@
-﻿cmake_minimum_required (VERSION 3.16)
+﻿cmake_minimum_required (VERSION 3.17)
 
 project (video_capture 
     LANGUAGES CXX 
@@ -32,7 +32,7 @@ add_subdirectory(video_capture)
 
 option(VC_BUILD_TESTS "Build library tests" OFF)
 option(VC_BUILD_EXAMPLES "Build library examples" ON)
-option(USE_SYSTEM_FFMPEG "Use system FFMPEG" OFF)
+option(USE_SYSTEM_FFMPEG "Use system FFMPEG" ON)
 
 if(${VC_BUILD_TESTS})
     add_subdirectory(tests)
