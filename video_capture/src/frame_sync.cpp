@@ -1,4 +1,4 @@
-#include <frame_sync.hpp>
+#include <video_capture/frame_sync.hpp>
 #include <thread>
 #include <cmath>
 

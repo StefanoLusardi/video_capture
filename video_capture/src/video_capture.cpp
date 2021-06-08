@@ -1,4 +1,4 @@
-#include <video_capture.hpp>
+#include <video_capture/video_capture.hpp>
 #include "logger.hpp"
 #include "hw_acceleration.hpp"
 
