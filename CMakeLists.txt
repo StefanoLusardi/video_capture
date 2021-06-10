@@ -28,10 +28,16 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
 endif()
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-option(VCPP_BUILD_SHARED "Build shared library" ON)
+option(VCPP_BUILD_SHARED "Build shared library" OFF)
 option(VCPP_BUILD_TESTS "Build library unit tests" OFF)
 option(VCPP_BUILD_EXAMPLES "Build library examples" ON)
 option(VCPP_ADDRESS_SANITIZER "Build with Address sanitizer (GCC/Clang only)" ON)
+
+if (WIN32 AND NOT ${VCPP_BUILD_SHARED})
+    message(STATUS "Windows static lib is not supported.") 
+    message(STATUS "FFMPEG downloaded using scripts/install_ffmpeg.bat provides shared libraries only.") 
+    set(${VCPP_BUILD_SHARED} OFF)
+endif()
 
 add_subdirectory(video_capture)
 
