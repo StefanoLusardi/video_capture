@@ -4,7 +4,13 @@ message("::VideoCapture:: Library")
 message("")
 
 set(PROJECT_NAME video_capture)
-set(VCPP_FFMPEG_LIBS avutil avformat avdevice avcodec swscale)
+
+set(VCPP_FFMPEG_LIBS
+    avutil 
+    avformat
+    avdevice 
+    avcodec
+    swscale)
 
 set(VCPP_SOURCES 
     src/video_capture.cpp
@@ -19,8 +25,13 @@ set(VCPP_HEADERS
     include/video_capture/video_capture.hpp)
 
 if(${VCPP_BUILD_SHARED} OR BUILD_SHARED_LIBS)
+    message(STATUS "Build static library")
+    # Unix relocatable library: it can be searched in executable directory or inside /<EXE_DIR>/../lib
+    set(CMAKE_INSTALL_RPATH "$ORIGIN;$ORIGIN/../lib")
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
     add_library(${PROJECT_NAME} SHARED ${VCPP_SOURCES} ${VCPP_HEADERS})
 else()
+    message(STATUS "Build static library")
     add_library(${PROJECT_NAME} STATIC ${VCPP_SOURCES} ${VCPP_HEADERS})
 endif()
 
@@ -30,7 +41,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC include)
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${video_capture_VERSION} SOVERSION ${video_capture_VERSION_MAJOR})
 set_target_properties(${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX d)
 
-if (WIN32)
+# Windows
+if(WIN32)
     # FFMPEG must be installed at the environment variable %FFMPEG_DIR%
     target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{FFMPEG_DIR}/lib")    
     target_link_libraries(${PROJECT_NAME} PRIVATE ${VCPP_FFMPEG_LIBS})
@@ -40,6 +52,7 @@ if (WIN32)
     endforeach()
 endif()
 
+# Linux
 if(UNIX AND NOT APPLE)
     set(FFMPEG_LIBS "")
     foreach(LIB ${VCPP_FFMPEG_LIBS})
@@ -49,3 +62,16 @@ if(UNIX AND NOT APPLE)
     pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET ${FFMPEG_LIBS})
     target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::FFMPEG)
 endif()
+
+# # Sanitizers
+# if(${VCPP_ADDRESS_SANITIZER})
+#     if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+#         message(FATAL_ERROR "Sanitizer supported only for gcc/clang")
+#     endif()
+#     message(STATUS "Address sanitizer enabled")
+#     target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address,undefined)
+#     target_compile_options(${PROJECT_NAME} PRIVATE -fno-sanitize=signed-integer-overflow)
+#     target_compile_options(${PROJECT_NAME} PRIVATE -fno-sanitize-recover=all)
+#     target_compile_options(${PROJECT_NAME} PRIVATE -fno-omit-frame-pointer)
+#     target_link_libraries(${PROJECT_NAME} PRIVATE -fsanitize=address,undefined -fuse-ld=gold)
+# endif()

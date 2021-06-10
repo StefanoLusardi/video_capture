@@ -27,13 +27,11 @@ int main(int argc, char** argv)
 		std::cout << "Using video file: " << video_path << std::endl;
 	}
 
-	video_path = "../../../../tests/data/testsrc_120sec_30fps.mkv";
-
 	vc::video_capture vc;
 	vc.set_log_callback(log_info, vc::log_level::info);
 	vc.set_log_callback(log_error, vc::log_level::error);
 
-	if(!vc.open(video_path, vc::decode_support::SW))
+	if(!vc.open(video_path, vc::decode_support::HW))
 	{
 		std::cout << "Unable to open " << video_path << std::endl;
 		return -1;

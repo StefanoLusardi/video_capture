@@ -18,10 +18,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# Unix relocatable library: it can be searched in executable directory or inside /<EXE_DIR>/../lib
-set(CMAKE_INSTALL_RPATH "$ORIGIN;$ORIGIN/../lib")
-set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
-
 set(CONAN_SYSTEM_INCLUDES ON)
 set(CONAN_CMAKE_SILENT_OUTPUT ON)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/${PROJECT_NAME})
@@ -32,11 +28,12 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
 endif()
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-add_subdirectory(video_capture)
-
 option(VCPP_BUILD_SHARED "Build shared library" ON)
-option(VCPP_BUILD_TESTS "Build library tests" OFF)
+option(VCPP_BUILD_TESTS "Build library unit tests" OFF)
 option(VCPP_BUILD_EXAMPLES "Build library examples" ON)
+option(VCPP_ADDRESS_SANITIZER "Build with Address sanitizer (GCC/Clang only)" ON)
+
+add_subdirectory(video_capture)
 
 if(${VCPP_BUILD_TESTS})
     add_subdirectory(tests)

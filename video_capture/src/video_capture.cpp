@@ -105,12 +105,6 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
         return false;
     }
     
-    if (_tmp_frame = av_frame_alloc(); !_tmp_frame)
-    {
-        log_error(_logger, "av_frame_alloc");
-        return false;
-    }
-
     if (_src_frame = av_frame_alloc(); !_src_frame)
     {
         log_error(_logger, "av_frame_alloc");
