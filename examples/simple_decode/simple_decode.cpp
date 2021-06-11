@@ -33,7 +33,7 @@ int main(int argc, char** argv)
 	std::cout << "Decoded Frames: " << num_decoded_frames << std::endl;
 
 	// Release and cleanup video_capture
-	vc.release();	
+	vc.release();
 
 	return 0;
 }

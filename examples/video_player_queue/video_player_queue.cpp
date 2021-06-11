@@ -2,11 +2,12 @@
 #include <iostream>
 #include <thread>
 
-#define VIDEO_CAPTURE_LOG_ENABLED 1
 #include <video_capture/video_capture.hpp> 
 #include <video_capture/frame_sync.hpp>
 #include <video_capture/frame_queue.hpp>
 #include <opencv2/highgui.hpp> // OpenCV GUI
+
+using namespace std::chrono_literals;
 
 int main(int argc, char** argv)
 {
@@ -25,42 +26,45 @@ int main(int argc, char** argv)
 	cv::namedWindow(window_title);
 
 	int n_decode_frames = 0;
-	vc::frame_queue<cv::Mat> fq;
+	vc::frame_queue<cv::Mat> fq(10);
+	// vc::frame_queue<uint8_t*> fq(10);
 
+	std::atomic_bool isVideoFinished = false;
 	auto decode_thread = std::thread([&] ()
 	{
-		using namespace std::chrono_literals;
 		uint8_t* frame_data = {};
 		const auto [w, h] = size.value();
 		
 		while(vc.next(&frame_data))
 		{
 			cv::Mat frame(cv::Size(w, h), CV_8UC3, frame_data);			
-			fq.put(frame.clone());
+			fq.put(frame);
+			// fq.put(frame_data);
 			++n_decode_frames;
 			std::this_thread::sleep_for(10ms);
 		}
+
+		isVideoFinished = true;
+		cv::Mat frame(cv::Size(w, h), CV_8UC3, frame_data);			
+		fq.put(frame);
 	});
 
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 
-	vc::frame_sync fs = vc::frame_sync(frame_time);
-	
 	// NOTE: height is the number of cv::Mat rows, width is the number of cv::Mat cols.
 	const auto [w, h] = size.value();
 	int n_show_frames = 0;
 	cv::Mat frame(cv::Size(w, h), CV_8UC3); 
+	// uint8_t* frame = {}; 
 
 	auto total_start_time = std::chrono::high_resolution_clock::now();
-	fs.start();
-	while(!fq.is_empty())
+	while(!isVideoFinished)
 	{
 		fq.get(&frame);
 		cv::imshow(window_title, frame);
 		cv::waitKey(1);
 		++n_show_frames;
-		fs.update();
-		// std::this_thread::sleep_for(std::chrono::milliseconds(250));
+		std::this_thread::sleep_for(10ms);
 	}
 
 	auto total_end_time = std::chrono::high_resolution_clock::now();
