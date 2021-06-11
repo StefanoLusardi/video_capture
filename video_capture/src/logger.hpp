@@ -12,8 +12,8 @@ extern "C"
 #include <map>
 
 #if defined(VIDEO_CAPTURE_LOG_ENABLED)
-    #define log_info(logger, ...) logger->log(log_level::info, __DATE__, __FILE__, __LINE__, ##__VA_ARGS__)
-    #define log_error(logger, ...) logger->log(log_level::error, __DATE__, __FILE__, __LINE__, ##__VA_ARGS__)
+    #define log_info(logger, ...) logger->log(log_level::info, __FILE__, __LINE__, ##__VA_ARGS__)
+    #define log_error(logger, ...) logger->log(log_level::error, __FILE__, __LINE__, ##__VA_ARGS__)
 #else
     #define log_info(logger, ...) (void)0
     #define log_error(logger, ...) (void)0

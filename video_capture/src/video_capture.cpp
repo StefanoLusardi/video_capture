@@ -117,6 +117,8 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
         return false;
     }
 
+    _tmp_frame = _src_frame;
+
     _dst_frame->format = AV_PIX_FMT_BGR24;
 	_dst_frame->width  = _codec_ctx->width;
 	_dst_frame->height = _codec_ctx->height;

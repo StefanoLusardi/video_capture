@@ -94,9 +94,9 @@ public:
         frames_ctx->width = w;
         frames_ctx->height = h;
         frames_ctx->format = (AVPixelFormat)hw_pixel_format;
-        frames_ctx->format = AV_PIX_FMT_NV12;
+        frames_ctx->sw_format = AV_PIX_FMT_NV12;
         frames_ctx->initial_pool_size = 32;
-        if(av_hwframe_ctx_init(hw_frames_ctx) <0)
+        if(av_hwframe_ctx_init(hw_frames_ctx) < 0)
         {
             log_error(_logger, "Error initilizing HW frame context");
         }
