@@ -31,3 +31,10 @@ message(":::::::::::::::::::::::::::::::::::::::::::")
 message("::VideoCapture:: Examples - video_player_queue")
 message("")
 add_subdirectory(video_player_queue)
+
+
+message("")
+message(":::::::::::::::::::::::::::::::::::::::::::")
+message("::VideoCapture:: Examples - video_player_opengl")
+message("")
+add_subdirectory(video_player_opengl)

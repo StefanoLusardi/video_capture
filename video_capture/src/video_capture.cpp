@@ -280,7 +280,7 @@ bool video_capture::decode()
     return true;
 }
 
-bool video_capture::retrieve(uint8_t** data)
+bool video_capture::retrieve(uint8_t** data, int64_t* pts)
 {
     _sws_ctx = sws_getCachedContext(_sws_ctx,
         _codec_ctx->width, _codec_ctx->height, (AVPixelFormat)_tmp_frame->format,
@@ -304,11 +304,13 @@ bool video_capture::retrieve(uint8_t** data)
         return false;
     }
 
+    auto tb = _format_ctx->streams[_stream_index]->time_base;
+    *pts = _tmp_frame->best_effort_timestamp * (double)tb.num / (double)tb.den;
     *data = _dst_frame->data[0];
     return true;
 }
 
-bool video_capture::next(uint8_t** data)
+bool video_capture::next(uint8_t** data, int64_t* pts)
 {
     if(!grab())
         return false;
@@ -316,7 +318,7 @@ bool video_capture::next(uint8_t** data)
     if(!decode())
         return false;
 
-    return retrieve(data);
+    return retrieve(data, pts);
 }
 
 void video_capture::release()
