@@ -280,7 +280,7 @@ bool video_capture::decode()
     return true;
 }
 
-bool video_capture::retrieve(uint8_t** data, int64_t* pts)
+bool video_capture::retrieve(uint8_t** data, double* pts)
 {
     _sws_ctx = sws_getCachedContext(_sws_ctx,
         _codec_ctx->width, _codec_ctx->height, (AVPixelFormat)_tmp_frame->format,
@@ -310,7 +310,7 @@ bool video_capture::retrieve(uint8_t** data, int64_t* pts)
     return true;
 }
 
-bool video_capture::next(uint8_t** data, int64_t* pts)
+bool video_capture::next(uint8_t** data, double* pts)
 {
     if(!grab())
         return false;

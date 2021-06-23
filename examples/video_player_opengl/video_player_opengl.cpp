@@ -24,14 +24,14 @@ int main(int argc, char **argv)
 
 	if (!glfwInit())
 	{
-		printf("Couldn't init GLFW\n");
+		std::cout << "Couldn't init GLFW" << std::endl;
 		return 1;
 	}
 
 	GLFWwindow *window = glfwCreateWindow(frame_width, frame_height, "Video Player OpenGL", NULL, NULL);
 	if (!window)
 	{
-		printf("Couldn't open window\n");
+		std::cout << "Couldn't open window" << std::endl;
 		return 1;
 	}
 
@@ -65,11 +65,11 @@ int main(int argc, char **argv)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Read a new frame and load it into texture
-		int64_t pts;
+		double pts = 0.0;
 		if (!vc.next(&frame_data, &pts))
 		{
 			total_end_time = std::chrono::high_resolution_clock::now();
-			printf("Couldn't load video frame\n");
+			std::cout << "Couldn't load video frame" << std::endl;
 			break;
 		}
 
@@ -82,7 +82,10 @@ int main(int argc, char **argv)
 		}
 
 		while (pts > glfwGetTime())
-			glfwWaitEventsTimeout(pts - glfwGetTime());
+		{
+			if(const auto timeout = pts - glfwGetTime(); timeout > 0.0)
+				glfwWaitEventsTimeout(timeout);
+		}
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frame_width, frame_height, 0, GL_BGR, GL_UNSIGNED_BYTE, frame_data);
 
@@ -113,6 +116,9 @@ int main(int argc, char **argv)
 	std::cout << "Decode time: " << std::chrono::duration_cast<std::chrono::milliseconds>(total_end_time - total_start_time).count() << "ms" << std::endl;
 	
 	vc.release();
+
+	glfwDestroyWindow(window);
+	glfwTerminate();
 
 	return 0;
 }

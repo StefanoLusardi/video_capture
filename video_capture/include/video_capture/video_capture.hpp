@@ -35,7 +35,7 @@ public:
     using log_callback_t = std::function<void(const std::string&)>;
     void set_log_callback(const log_callback_t& cb, const log_level& level = log_level::all);    
     bool open(const std::string& video_path, decode_support decode_preference = decode_support::none);
-    bool next(uint8_t** data, int64_t* pts = nullptr);
+    bool next(uint8_t** data, double* pts = nullptr);
     void release();
     
     auto get_frame_count() const -> std::optional<int>;
@@ -46,7 +46,7 @@ public:
 protected:
     bool grab();
     bool decode();
-    bool retrieve(uint8_t** data, int64_t* pts = nullptr);
+    bool retrieve(uint8_t** data, double* pts = nullptr);
     void reset();
     bool is_error(const char* func_name, const int error) const;
 
