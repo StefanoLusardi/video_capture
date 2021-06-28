@@ -17,7 +17,7 @@ struct raw_frame
 	double pts = 0.0;
 };
 
-void decode_thread(vc::video_capture& vc, vc::frame_queue<raw_frame*>& frame_queue, uint frame_size_byte)
+void decode_thread(vc::video_capture& vc, vc::frame_queue<raw_frame*>& frame_queue, unsigned int frame_size_byte)
 {
 	int frames_decoded = 0;
 	while(true)
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
 	auto total_start_time = std::chrono::high_resolution_clock::now();
 	auto total_end_time = std::chrono::high_resolution_clock::now();
 
-	uint frame_size_byte = frame_width * frame_height * 3;
+	unsigned int frame_size_byte = frame_width * frame_height * 3;
 	vc::frame_queue<raw_frame*> frame_queue(10);
 	std::thread t(&decode_thread, std::ref(vc), std::ref(frame_queue), frame_size_byte);
 

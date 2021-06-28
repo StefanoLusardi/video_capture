@@ -25,7 +25,7 @@ set(VCPP_HEADERS
     include/video_capture/video_capture.hpp)
 
 if(${VCPP_BUILD_SHARED})
-    message(STATUS "Build static library")
+    message(STATUS "Build shared library")
     # Unix relocatable library: it can be searched in executable directory or inside /<EXE_DIR>/../lib
     set(CMAKE_INSTALL_RPATH "$ORIGIN;$ORIGIN/../lib")
     set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
