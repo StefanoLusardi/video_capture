@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 				glfwWaitEventsTimeout(timeout);
 		}
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frame_width, frame_height, 0, GL_BGR, GL_UNSIGNED_BYTE, frame_data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frame_width, frame_height, 0, GL_RGB, GL_UNSIGNED_BYTE, frame_data);
 
 		// Render whatever you want
 		glEnable(GL_TEXTURE_2D);
