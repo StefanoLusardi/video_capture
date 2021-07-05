@@ -14,7 +14,6 @@ set(VCPP_FFMPEG_LIBS
 
 set(VCPP_SOURCES 
     src/video_capture.cpp
-    src/frame_sync.cpp
     src/hw_acceleration.hpp
     src/logger.hpp)
 
@@ -22,7 +21,6 @@ set(VCPP_HEADERS
     include/video_capture/api.hpp
     include/video_capture/raw_frame.hpp
     include/video_capture/frame_queue.hpp
-    include/video_capture/frame_sync.hpp
     include/video_capture/video_capture.hpp)
 
 if(${VCPP_BUILD_SHARED})

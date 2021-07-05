@@ -4,7 +4,6 @@
 
 // #define VIDEO_CAPTURE_LOG_ENABLED 1
 #include <video_capture/video_capture.hpp> 
-#include <video_capture/frame_sync.hpp>
 #include <opencv2/highgui.hpp> // OpenCV GUI
 
 void log_info(const std::string& str)  { std::cout << "[  INFO ] " << str << std::endl; }
@@ -63,9 +62,6 @@ int main(int argc, char** argv)
 	int n_frames = 0;
 	auto total_start_time = std::chrono::high_resolution_clock::now();
 
-	vc::frame_sync fs = vc::frame_sync(frame_time);
-
-	fs.start();
 	while(true)
 	{
 		if(!vc.next(&frame.data))
@@ -74,8 +70,6 @@ int main(int argc, char** argv)
 		cv::imshow(window_title, frame);
 		cv::waitKey(1);
 		++n_frames;
-
-		fs.update();
 	}
 
 	auto total_end_time = std::chrono::high_resolution_clock::now();
