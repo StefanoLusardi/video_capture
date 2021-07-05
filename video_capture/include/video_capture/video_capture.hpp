@@ -1,6 +1,7 @@
 #pragma once
 
 #include "api.hpp"
+
 #include <string>
 #include <functional>
 #include <memory>
@@ -20,6 +21,7 @@ struct AVBufferRef;
 
 namespace vc
 {
+struct raw_frame;
 enum class decode_support { none, SW, HW };
 enum class log_level { all, info, error };
 
@@ -36,17 +38,20 @@ public:
     void set_log_callback(const log_callback_t& cb, const log_level& level = log_level::all);    
     bool open(const std::string& video_path, decode_support decode_preference = decode_support::none);
     bool next(uint8_t** data, double* pts = nullptr);
+    bool next_frame(raw_frame* frame);
     void release();
     
     auto get_frame_count() const -> std::optional<int>;
-    auto get_duration() const -> std::optional<std::chrono::high_resolution_clock::duration>;
+    auto get_duration() const -> std::optional<std::chrono::steady_clock::duration>;
     auto get_frame_size() const -> std::optional<std::tuple<int, int>>;
+    auto get_frame_size_in_bytes() const -> std::optional<int>;
     auto get_fps() const -> std::optional<double>;
 
 protected:
     bool grab();
     bool decode();
     bool retrieve(uint8_t** data, double* pts = nullptr);
+    bool retrieve_frame(raw_frame* frame);
     void reset();
     bool is_error(const char* func_name, const int error) const;
 

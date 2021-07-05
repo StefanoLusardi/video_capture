@@ -4,11 +4,19 @@
 #include <atomic>
 
 #include <video_capture/video_capture.hpp>
-#include <video_capture/frame_queue.hpp>
+#include <video_capture/raw_frame.hpp>
 
 #include <GLFW/glfw3.h>
 
 using namespace std::chrono_literals;
+
+
+double get_elapsed_time()
+{
+	static std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> start_time = std::chrono::steady_clock::now();
+	std::chrono::duration<double> elapsed_time = std::chrono::steady_clock::now() - start_time;
+	return elapsed_time.count();
+}
 
 int main(int argc, char **argv)
 {
@@ -37,7 +45,6 @@ int main(int argc, char **argv)
 
 	glfwMakeContextCurrent(window);
 
-	// Generate texture
 	GLuint tex_handle;
 	glGenTextures(1, &tex_handle);
 	glBindTexture(GL_TEXTURE_2D, tex_handle);
@@ -48,8 +55,9 @@ int main(int argc, char **argv)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-	uint8_t *frame_data = {};
-
+	std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> start_time = std::chrono::steady_clock::now();
+	std::chrono::duration<double> elapsed_time(0.0);
+	
 	auto total_start_time = std::chrono::high_resolution_clock::now();
 	auto total_end_time = std::chrono::high_resolution_clock::now();
 
@@ -60,36 +68,25 @@ int main(int argc, char **argv)
 	glOrtho(0, window_width, window_height, 0, -1, 1);
 	glMatrixMode(GL_MODELVIEW);
 
+	std::unique_ptr<vc::raw_frame> frame;
 	while (!glfwWindowShouldClose(window))
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Read a new frame and load it into texture
-		double pts = 0.0;
-		if (!vc.next(&frame_data, &pts))
+		frame = std::make_unique<vc::raw_frame>();
+		if (!vc.next_frame(frame.get()))
 		{
 			total_end_time = std::chrono::high_resolution_clock::now();
 			std::cout << "Couldn't load video frame" << std::endl;
+			std::cout << "Video finished" << std::endl;
 			break;
 		}
 
-		static bool first_frame = true;
-		if (first_frame)
-		{
-			total_start_time = std::chrono::high_resolution_clock::now();
-			glfwSetTime(0.0);
-			first_frame = false;
-		}
+		if (const auto timeout = frame->pts - get_elapsed_time(); timeout > 0.0)
+			std::this_thread::sleep_for(std::chrono::duration<double>(timeout));
 
-		while (pts > glfwGetTime())
-		{
-			if(const auto timeout = pts - glfwGetTime(); timeout > 0.0)
-				glfwWaitEventsTimeout(timeout);
-		}
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frame_width, frame_height, 0, GL_RGB, GL_UNSIGNED_BYTE, frame->data.data());
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frame_width, frame_height, 0, GL_RGB, GL_UNSIGNED_BYTE, frame_data);
-
-		// Render whatever you want
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, tex_handle);
 		glBegin(GL_QUADS);

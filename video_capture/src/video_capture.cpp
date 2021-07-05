@@ -1,4 +1,6 @@
 #include <video_capture/video_capture.hpp>
+#include <video_capture/raw_frame.hpp>
+
 #include "logger.hpp"
 #include "hw_acceleration.hpp"
 
@@ -68,7 +70,7 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
     }
 
     AVCodec* codec = nullptr;
-    if (_stream_index = av_find_best_stream(_format_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &codec, 0); _stream_index < 0)
+    if (_stream_index = av_find_best_stream(_format_ctx, AVMediaType::AVMEDIA_TYPE_VIDEO, -1, -1, &codec, 0); _stream_index < 0)
     {
         log_error(_logger, "av_find_best_stream", _logger->err2str(_stream_index));
         return false;
@@ -119,10 +121,9 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
 
     _tmp_frame = _src_frame;
 
-    _dst_frame->format = AV_PIX_FMT_BGR24;
+    _dst_frame->format = AVPixelFormat::AV_PIX_FMT_BGR24;
 	_dst_frame->width  = _codec_ctx->width;
 	_dst_frame->height = _codec_ctx->height;
-    // if (auto r = av_frame_get_buffer(_dst_frame, 24); r < 0)
     if (auto r = av_frame_get_buffer(_dst_frame, 0); r < 0)
     {
         log_error(_logger, "av_frame_get_buffer", _logger->err2str(r));
@@ -131,8 +132,8 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
 
     _is_initialized = true;
     log_info(_logger, "Opened video path:", video_path);
-    log_info(_logger, "Frame Width:", _format_ctx->streams[_stream_index]->codec->width, "px");
-    log_info(_logger, "Frame Height:", _format_ctx->streams[_stream_index]->codec->height, "px");
+    log_info(_logger, "Frame Width:", _codec_ctx->width, "px");
+    log_info(_logger, "Frame Height:", _codec_ctx->height, "px");
     log_info(_logger, "Frame Rate:", (get_fps() != std::nullopt ? get_fps().value() : -1), "fps");
     log_info(_logger, "Duration:", (get_duration() != std::nullopt ? std::chrono::duration_cast<std::chrono::seconds>(get_duration().value()).count() : -1), "sec");
     log_info(_logger, "Number of frames:", (get_frame_count() != std::nullopt ? get_frame_count().value() : -1));
@@ -151,9 +152,9 @@ auto video_capture::get_frame_count() const -> std::optional<int>
     auto nb_frames = _format_ctx->streams[_stream_index]->nb_frames;
     if (!nb_frames)
     {
-        double duration_sec = (double)_format_ctx->duration / (double)AV_TIME_BASE;
+        double duration_sec = static_cast<double>(_format_ctx->duration) / static_cast<double>(AV_TIME_BASE);
         auto fps = get_fps();
-        nb_frames = (int64_t)std::floor(duration_sec * fps.value() + 0.5);
+        nb_frames = std::floor(duration_sec * fps.value() + 0.5);
     }
     if (nb_frames)
         return std::make_optional(static_cast<int>(nb_frames));
@@ -161,7 +162,7 @@ auto video_capture::get_frame_count() const -> std::optional<int>
     return std::nullopt;
 }
 
-auto video_capture::get_duration() const -> std::optional<std::chrono::high_resolution_clock::duration>
+auto video_capture::get_duration() const -> std::optional<std::chrono::steady_clock::duration>
 {
     if(!_is_initialized)
     {
@@ -183,6 +184,18 @@ auto video_capture::get_frame_size() const -> std::optional<std::tuple<int, int>
     
     auto size = std::make_tuple(_codec_ctx->width, _codec_ctx->height);
     return std::make_optional(size);
+}
+
+auto video_capture::get_frame_size_in_bytes() const -> std::optional<int>
+{
+    if(!_is_initialized)
+    {
+        log_error(_logger, "Frame size in bytes not available. Video path must be opened first.");
+        return std::nullopt;
+    }
+
+    auto bytes = _codec_ctx->width * _codec_ctx->height * 3;
+    return std::make_optional(bytes);
 }
 
 auto video_capture::get_fps() const -> std::optional<double>
@@ -294,6 +307,7 @@ bool video_capture::retrieve(uint8_t** data, double* pts)
     }
 
     _dst_frame->linesize[0] = _codec_ctx->width * 3;
+
     int dest_slice_h = sws_scale(_sws_ctx,
         _tmp_frame->data, _tmp_frame->linesize, 0, _codec_ctx->height,
         _dst_frame->data, _dst_frame->linesize);
@@ -304,9 +318,43 @@ bool video_capture::retrieve(uint8_t** data, double* pts)
         return false;
     }
 
-    auto tb = _format_ctx->streams[_stream_index]->time_base;
-    *pts = _tmp_frame->best_effort_timestamp * (double)tb.num / (double)tb.den;
+    const auto time_base = _format_ctx->streams[_stream_index]->time_base;
+    *pts = _tmp_frame->best_effort_timestamp * static_cast<double>(time_base.num) / static_cast<double>(time_base.den);
+
     *data = _dst_frame->data[0];
+    return true;
+}
+
+bool video_capture::retrieve_frame(raw_frame* frame)
+{
+    _sws_ctx = sws_getCachedContext(_sws_ctx,
+        _codec_ctx->width, _codec_ctx->height, (AVPixelFormat)_tmp_frame->format,
+        _codec_ctx->width, _codec_ctx->height, AVPixelFormat::AV_PIX_FMT_BGR24,
+        SWS_BICUBIC, nullptr, nullptr, nullptr);
+    
+    if (!_sws_ctx)
+    {
+        log_error(_logger, "Unable to initialize SwsContext");
+        return false;
+    }
+
+    frame->data.resize(_codec_ctx->height * _codec_ctx->width * 3);
+
+    _dst_frame->linesize[0] = _codec_ctx->width * 3;
+    _dst_frame->data[0] = frame->data.data();
+    int dest_slice_h = sws_scale(_sws_ctx,
+        _tmp_frame->data, _tmp_frame->linesize, 0, _codec_ctx->height,
+        _dst_frame->data, _dst_frame->linesize);
+
+    if (dest_slice_h != _codec_ctx->height)
+    {
+        log_error(_logger, "sws_scale() worked out unexpectedly");
+        return false;
+    }
+
+    const auto time_base = _format_ctx->streams[_stream_index]->time_base;
+    frame->pts = _tmp_frame->best_effort_timestamp * static_cast<double>(time_base.num) / static_cast<double>(time_base.den);
+    
     return true;
 }
 
@@ -319,6 +367,23 @@ bool video_capture::next(uint8_t** data, double* pts)
         return false;
 
     return retrieve(data, pts);
+}
+
+bool video_capture::next_frame(raw_frame* frame)
+{
+    if(!grab())
+        return false;
+
+    if(!decode())
+        return false;
+
+    // TODO: merge internal api?
+    // frame->data.resize(_codec_ctx->height * _codec_ctx->width * 3);
+    // auto data = frame->data.data();
+    // auto pts =  &frame->pts;
+    // return retrieve(&data, pts);
+
+    return retrieve_frame(frame);
 }
 
 void video_capture::release()
