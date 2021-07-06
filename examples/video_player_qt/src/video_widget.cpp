@@ -1,5 +1,4 @@
 #include "video_widget.hpp"
-#include <video_capture/frame_sync.hpp>
 
 #include <QPainter>
 #include <QDebug>
@@ -84,8 +83,6 @@ bool video_widget::play()
         emit started();
         
         const auto frame_time = std::chrono::nanoseconds(static_cast<int>(1'000'000'000/fps));
-        vc::frame_sync fs = vc::frame_sync(frame_time);
-	    fs.start();
 
         while(true)
         {
@@ -94,7 +91,6 @@ bool video_widget::play()
             
             _current_frame = std::move(QImage(frame_data, w, h, bytesPerLine, QImage::Format_BGR888));
             emit refresh();
-            fs.update();
         }
 
         _current_frame = QImage();

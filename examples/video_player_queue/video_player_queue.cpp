@@ -1,9 +1,9 @@
 #include <memory>
 #include <iostream>
 #include <thread>
+#include <atomic>
 
 #include <video_capture/video_capture.hpp> 
-#include <video_capture/frame_sync.hpp>
 #include <video_capture/frame_queue.hpp>
 #include <opencv2/highgui.hpp> // OpenCV GUI
 

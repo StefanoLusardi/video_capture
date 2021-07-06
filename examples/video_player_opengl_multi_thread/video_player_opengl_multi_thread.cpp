@@ -2,42 +2,30 @@
 #include <iostream>
 #include <thread>
 #include <atomic>
-#include  <cstring>
+#include <cstring>
 
 #include <video_capture/video_capture.hpp>
 #include <video_capture/frame_queue.hpp>
+#include <video_capture/raw_frame.hpp>
 
 #include <GLFW/glfw3.h>
 
 using namespace std::chrono_literals;
 
-struct raw_frame
-{
-	std::vector<uint8_t> data;
-	double pts = 0.0;
-};
-
-void decode_thread(vc::video_capture& vc, vc::frame_queue<raw_frame*>& frame_queue, unsigned int frame_size_byte)
+void decode_thread(vc::video_capture& vc, vc::frame_queue<std::unique_ptr<vc::raw_frame>>& frame_queue)
 {
 	int frames_decoded = 0;
 	while(true)
 	{
-		std::this_thread::yield();
-		// std::this_thread::sleep_for(10ms);
-
-		uint8_t* data = {};
-		raw_frame* frame = new raw_frame();
-		if (!vc.next(&data, &frame->pts))
+		auto frame = std::make_unique<vc::raw_frame>();
+		if(!vc.next_frame(frame.get()))
 		{
 			std::cout << "Video finished" << std::endl;
 			std::cout << "frames decoded: " << frames_decoded << std::endl;
 			break;
 		}
-
-		frame->data = std::vector<uint8_t>(frame_size_byte);
-		std::memcpy(frame->data.data(), data, frame_size_byte);
-
-		frame_queue.put(frame);
+		
+		frame_queue.put(std::move(frame));
 		++frames_decoded;
 	}
 }
@@ -110,11 +98,18 @@ void draw_frame(GLFWwindow *window, GLuint& texture_handle, int frame_width, int
 	glfwPollEvents();
 }
 
+double get_elapsed_time()
+{
+	static std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> start_time = std::chrono::steady_clock::now();
+	std::chrono::duration<double> elapsed_time = std::chrono::steady_clock::now() - start_time;
+	return elapsed_time.count();
+}
+
 int main(int argc, char **argv)
 {
 	std::cout << "GLFW version: " << glfwGetVersionString() << std::endl;
 	vc::video_capture vc;
-	const auto video_path = "../../../../tests/data/testsrc_120sec_30fps.mkv";
+	const auto video_path = "../../../../tests/data/testsrc_10sec_30fps.mkv";
 
 	vc.open(video_path, vc::decode_support::HW);
 
@@ -122,12 +117,8 @@ int main(int argc, char **argv)
 	const auto frame_size = vc.get_frame_size();
 	const auto [frame_width, frame_height] = frame_size.value();
 
-	auto total_start_time = std::chrono::high_resolution_clock::now();
-	auto total_end_time = std::chrono::high_resolution_clock::now();
-
-	unsigned int frame_size_byte = frame_width * frame_height * 3;
-	vc::frame_queue<raw_frame*> frame_queue(10);
-	std::thread t(&decode_thread, std::ref(vc), std::ref(frame_queue), frame_size_byte);
+	vc::frame_queue<std::unique_ptr<vc::raw_frame>> frame_queue(3);
+	std::thread t(&decode_thread, std::ref(vc), std::ref(frame_queue));
 
 	GLFWwindow *window = nullptr;
 	GLuint texture_handle;
@@ -136,27 +127,29 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 
 	int frames_shown = 0;
-	raw_frame* frame = nullptr;
+	std::unique_ptr<vc::raw_frame> frame;
+
+	std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> start_time = std::chrono::steady_clock::now();
+	std::chrono::duration<double> elapsed_time(0.0);
+	
+	auto total_start_time = std::chrono::high_resolution_clock::now();
+	auto total_end_time = std::chrono::high_resolution_clock::now();
 
 	while (!glfwWindowShouldClose(window))
 	{
 		if(!frame_queue.try_get(&frame))
 			break;
 
-		while (frame->pts > glfwGetTime())
-		{
-			if(const auto timeout = frame->pts - glfwGetTime(); timeout > 0.0)
-				glfwWaitEventsTimeout(timeout);
-		}
+		if (const auto timeout = frame->pts - get_elapsed_time(); timeout > 0.0)
+			std::this_thread::sleep_for(std::chrono::duration<double>(timeout));
 
 		draw_frame(window, texture_handle, frame_width, frame_height, frame->data.data());
 		++frames_shown;
-		delete frame;
 	}
 
 	total_end_time = std::chrono::high_resolution_clock::now();
 	std::cout << "Decode time: " << std::chrono::duration_cast<std::chrono::milliseconds>(total_end_time - total_start_time).count() << "ms" << std::endl;
-	std::cout << "frames shown:   " << frames_shown << std::endl;
+	std::cout << "Frames shown:   " << frames_shown << std::endl;
 	
 	t.join();
 	vc.release();
