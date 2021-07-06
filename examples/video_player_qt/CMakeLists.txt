@@ -69,3 +69,7 @@ endif()
 # Conan Qt6 Deploy
 # file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/qt.conf" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 # file(COPY "${Qt6_RES_DIRS}/archdatadir/plugins/" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugins/")
+
+if(${VCPP_BUILD_SANITIZERS})
+    include(sanitizers)
+endif()

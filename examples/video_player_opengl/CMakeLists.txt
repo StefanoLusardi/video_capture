@@ -24,3 +24,7 @@ target_link_libraries(${TARGET_NAME}
     PRIVATE video_capture 
     PRIVATE glfw
 )
+
+if(${VCPP_BUILD_SANITIZERS})
+    include(sanitizers)
+endif()

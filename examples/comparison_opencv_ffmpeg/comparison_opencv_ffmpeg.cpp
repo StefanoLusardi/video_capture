@@ -1,3 +1,14 @@
+/**
+ * example: 	simple_decode
+ * author:		Stefano Lusardi
+ * date:		Jun 2021
+ * description:	Comparison between OpenCV::VideoCapture and cv::video_capture. 
+ * 				API is very similar, yet simplified quite a lot.
+ * 				The frames are using OpenCV::imshow in both examples.
+ * 				Note that sleep time between consecutive frames is not accurate here, 
+ * 				see any video_player_xxx example for a more accurate playback.
+*/
+
 #include <memory>
 #include <iostream>
 #include <thread>

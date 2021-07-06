@@ -1,3 +1,10 @@
+/**
+ * example: 	video_player_qt
+ * author:		Stefano Lusardi
+ * date:		Jun 2021
+ * description:	Full application example of a very simple Qt based video player based on cv::video_capture. 
+*/
+
 #include "main_window.hpp"
 
 #include <QApplication>

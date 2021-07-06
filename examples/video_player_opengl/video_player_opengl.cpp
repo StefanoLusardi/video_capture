@@ -1,3 +1,13 @@
+/**
+ * example: 	video_player_opengl
+ * author:		Stefano Lusardi
+ * date:		Jun 2021
+ * description:	Example to show how to integrate cv::video_capture in a simple video player based on OpenGL (using GLFW). 
+ * 				Single threaded: Main thread decodes and draws subsequent frames.
+ * 				Note that this serves only as an example, as in real world application 
+ * 				you might want to handle decoding and rendering on separate threads (see any video_player_xxx_multi_thread).
+*/
+
 #include <memory>
 #include <iostream>
 #include <thread>
