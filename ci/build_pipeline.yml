@@ -40,6 +40,10 @@ stages:
             echo 'Ninja Version: '
             ninja --version
       - task: CmdLine@2
+        displayName: 'Install FFMPEG'
+        inputs:
+          script: scripts/install_ffmpeg.sh
+      - task: CmdLine@2
         displayName: 'Create Build Directory'
         inputs:
           script: mkdir -p build/$(BUILD_TYPE) && cd build/$(BUILD_TYPE)
@@ -79,6 +83,10 @@ stages:
             sudo apt install ninja-build
             echo 'Ninja Version: '
             ninja --version
+      - task: CmdLine@2
+        displayName: 'Install FFMPEG'
+        inputs:
+          script: scripts/install_ffmpeg.sh
       - task: CmdLine@2
         displayName: 'Create Build Directory'
         inputs:
