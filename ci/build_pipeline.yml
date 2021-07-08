@@ -115,3 +115,59 @@ jobs:
           script: 'ctest . --build-config $(BUILD_TYPE) --output-on-failure --timeout 60 -T Test -VV -j10'
           workingDirectory: $(BUILD_DIRECTORY)
 
+  - job: Windows
+    strategy:
+      matrix:
+        win2019 vs2019: 
+          VERSION: 'windows-2019'
+        win2016 vs2017: 
+          VERSION: 'vs2017-win2016'
+
+    pool:
+      vmImage: $(VERSION)
+
+    steps:
+      - task: CmdLine@2
+        displayName: 'Install Ninja'
+        inputs:
+          script: |
+            choco install --accept-license -y Ninja
+            ninja --version
+      - task: UsePythonVersion@0
+        displayName: 'Set Python 3.x'
+        inputs:
+          versionSpec: '3.x'
+          addToPath: true
+          architecture: 'x64'
+      - task: CmdLine@2
+        displayName: 'Install Conan'
+        inputs:
+          script: |
+            pip install conan
+            conan --version
+      - task: CmdLine@2
+        displayName: 'Install FFMPEG'
+        inputs:
+          script: scripts/install_ffmpeg.bat
+      - task: CmdLine@2
+        displayName: 'Create Build Directory'
+        inputs:
+          script: |
+            mkdir build && cd build
+            mkdir $(BUILD_TYPE) && cd $(BUILD_TYPE)
+      - task: CmdLine@2
+        displayName: 'Configure'
+        inputs:
+          script: 'cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ../..'
+          workingDirectory: '$(BUILD_DIRECTORY)'
+      - task: CmdLine@2
+        displayName: 'Build'
+        inputs:
+          script: 'cmake --build . --config $(BUILD_TYPE)'
+          workingDirectory: $(BUILD_DIRECTORY)
+      - task: CmdLine@2
+        displayName: 'Run Unit Tests'
+        continueOnError: true
+        inputs:
+          script: 'ctest . --build-config $(BUILD_TYPE) --output-on-failure --timeout 60 -T Test -VV -j10'
+          workingDirectory: $(BUILD_DIRECTORY)
