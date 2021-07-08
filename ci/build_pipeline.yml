@@ -15,239 +15,103 @@ variables:
   BUILD_TYPE: ${{ parameters.BUILD_TYPE }}
   BUILD_DIRECTORY: $(Build.SourcesDirectory)/build/$(BUILD_TYPE)
 
-stages:
 
-  - stage: Build
-    jobs:
+jobs:
 
-      - job: Ubuntu
-        displayName: 'Ubuntu_'
-        strategy:
-          matrix:
-            18.04_gcc9: 
-              VERSION: 'ubuntu-18.04'
-              CC: 'gcc-9'
-              CXX: 'g++-9'
-            18.04_gcc10: 
-              VERSION: 'ubuntu-18.04'
-              CC: 'gcc-10'
-              CXX: 'g++-10'
-            18.04_Clang9: 
-              VERSION: 'ubuntu-18.04'
-              CC: 'clang-9'
-              CXX: 'clang++-9'
-            20.04_gcc9: 
-              VERSION: 'ubuntu-20.04'
-              CC: 'gcc-9'
-              CXX: 'g++-9'
-            20.04_gcc10: 
-              VERSION: 'ubuntu-20.04'
-              CC: 'gcc-10'
-              CXX: 'g++-10'
-            20.04_Clang10: 
-              VERSION: 'ubuntu-20.04'
-              CC: 'clang-10'
-              CXX: 'clang++-10'
-            20.04_Clang11: 
-              VERSION: 'ubuntu-20.04'
-              CC: 'clang-11'
-              CXX: 'clang++-11'
-            20.04_Clang12: 
-              VERSION: 'ubuntu-20.04'
-              CC: 'clang-12'
-              CXX: 'clang++-12'
-          
-        pool:
-          vmImage: $(VERSION)
-
-        variables:
-          CC: $(CC)
-          CXX: $(CXX)
-
-        steps:
-          - task: UsePythonVersion@0
-            displayName: 'Set Python 3.x'
-            inputs:
-              versionSpec: '3.x'
-              addToPath: true
-              architecture: 'x64'
-          - task: CmdLine@2
-            displayName: 'Install Conan'
-            inputs:
-              script: |
-                python --version
-                sudo apt install -y python3-pip
-                pip install conan
-                source ~/.profile
-                conan --version
-          - task: CmdLine@2
-            displayName: 'Install Dependencies (required by examples only)'
-            inputs:
-              script: |
-                sudo apt install -y libgtk2.0-dev
-                sudo apt install -y libgl1-mesa-dev
-          - task: CmdLine@2
-            displayName: 'Install Ninja'
-            inputs:
-              script: |
-                sudo apt install -y ninja-build
-                echo 'Ninja Version: '
-                ninja --version
-          - task: CmdLine@2
-            displayName: 'Install FFMPEG'
-            inputs:
-              script: scripts/install_ffmpeg.sh
-          - task: CmdLine@2
-            displayName: 'Create Build Directory'
-            inputs:
-              script: mkdir -p build/$(BUILD_TYPE) && cd build/$(BUILD_TYPE)
-          - task: CmdLine@2
-            displayName: 'Configure'
-            inputs:
-              script: 'cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ../..'
-              workingDirectory: '$(BUILD_DIRECTORY)'
-          - task: CmdLine@2
-            displayName: 'Build'
-            inputs:
-              script: 'cmake --build . --config $(BUILD_TYPE)'
-              workingDirectory: $(BUILD_DIRECTORY)
-          - task: CmdLine@2
-            displayName: 'Run Unit Tests'
-            continueOnError: true
-            inputs:
-              script: 'ctest . --build-config $(BUILD_TYPE) --output-on-failure --timeout 60 -T Test -VV -j10'
-              workingDirectory: $(BUILD_DIRECTORY)
-
-
-
-  #   - job: Ubuntu1804_GCC9
-  #     dependsOn: []
-  #     timeoutInMinutes: 10
-
-  #     pool:
-  #       vmImage: 'ubuntu-18.04'
+  - job: Ubuntu
+    strategy:
+      matrix:
+        18.04 gcc9: 
+          VERSION: 'ubuntu-18.04'
+          CC: 'gcc-9'
+          CXX: 'g++-9'
+        18.04 gcc10: 
+          VERSION: 'ubuntu-18.04'
+          CC: 'gcc-10'
+          CXX: 'g++-10'
+        18.04 clang9: 
+          VERSION: 'ubuntu-18.04'
+          CC: 'clang-9'
+          CXX: 'clang++-9'
+        20.04 gcc9: 
+          VERSION: 'ubuntu-20.04'
+          CC: 'gcc-9'
+          CXX: 'g++-9'
+        20.04 gcc10: 
+          VERSION: 'ubuntu-20.04'
+          CC: 'gcc-10'
+          CXX: 'g++-10'
+        20.04 clang10: 
+          VERSION: 'ubuntu-20.04'
+          CC: 'clang-10'
+          CXX: 'clang++-10'
+        20.04 clang11: 
+          VERSION: 'ubuntu-20.04'
+          CC: 'clang-11'
+          CXX: 'clang++-11'
+        20.04 clang12: 
+          VERSION: 'ubuntu-20.04'
+          CC: 'clang-12'
+          CXX: 'clang++-12'
       
-  #     variables:
-  #       CC: gcc-9
-  #       CXX: g++-9
+    pool:
+      vmImage: $(VERSION)
 
-  #     steps:
-  #     - task: UsePythonVersion@0
-  #       displayName: 'Set Python 3.x'
-  #       inputs:
-  #         versionSpec: '3.x'
-  #         addToPath: true
-  #         architecture: 'x64'
-  #     - task: CmdLine@2
-  #       displayName: 'Install Conan'
-  #       inputs:
-  #         script: |
-  #           python --version
-  #           sudo apt install -y python3-pip
-  #           pip install conan
-  #           source ~/.profile
-  #           conan --version
-  #     - task: CmdLine@2
-  #       displayName: 'Install Dependencies (required by examples only)'
-  #       inputs:
-  #         script: |
-  #           sudo apt install -y libgtk2.0-dev
-  #           sudo apt install -y libgl1-mesa-dev
-  #     - task: CmdLine@2
-  #       displayName: 'Install Ninja'
-  #       inputs:
-  #         script: |
-  #           sudo apt install -y ninja-build
-  #           echo 'Ninja Version: '
-  #           ninja --version
-  #     - task: CmdLine@2
-  #       displayName: 'Install FFMPEG'
-  #       inputs:
-  #         script: scripts/install_ffmpeg.sh
-  #     - task: CmdLine@2
-  #       displayName: 'Create Build Directory'
-  #       inputs:
-  #         script: mkdir -p build/$(BUILD_TYPE) && cd build/$(BUILD_TYPE)
-  #     - task: CmdLine@2
-  #       displayName: 'Configure'
-  #       inputs:
-  #         script: 'cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ../..'
-  #         workingDirectory: '$(BUILD_DIRECTORY)'
-  #     - task: CmdLine@2
-  #       displayName: 'Build'
-  #       inputs:
-  #         script: 'cmake --build . --config $(BUILD_TYPE)'
-  #         workingDirectory: $(BUILD_DIRECTORY)
-  #     - task: CmdLine@2
-  #       displayName: 'Run Unit Tests'
-  #       continueOnError: true
-  #       inputs:
-  #         script: 'ctest . --build-config $(BUILD_TYPE) --output-on-failure --timeout 60 -T Test -VV -j10'
-  #         workingDirectory: $(BUILD_DIRECTORY)
+    variables:
+      CC: $(CC)
+      CXX: $(CXX)
 
-  #   - job: Ubuntu2004_GCC9
-  #     dependsOn: []
-  #     timeoutInMinutes: 10
-
-  #     pool:
-  #       vmImage: 'ubuntu-20.04'
-      
-  #     variables:
-  #       CC: gcc-9
-  #       CXX: g++-9
-
-  #     steps:
-  #     - task: UsePythonVersion@0
-  #       displayName: 'Set Python 3.x'
-  #       inputs:
-  #         versionSpec: '3.x'
-  #         addToPath: true
-  #         architecture: 'x64'
-  #     - task: CmdLine@2
-  #       displayName: 'Install Conan'
-  #       inputs:
-  #         script: |
-  #           python --version
-  #           sudo apt install -y python3-pip
-  #           pip install conan
-  #           source ~/.profile
-  #           conan --version
-  #     - task: CmdLine@2
-  #       displayName: 'Install Dependencies (required by examples only)'
-  #       inputs:
-  #         script: |
-  #           sudo apt install -y libgtk2.0-dev
-  #           sudo apt install -y libgl1-mesa-dev
-  #     - task: CmdLine@2
-  #       displayName: 'Install Ninja'
-  #       inputs:
-  #         script: |
-  #           sudo apt install -y ninja-build
-  #           echo 'Ninja Version: '
-  #           ninja --version
-  #     - task: CmdLine@2
-  #       displayName: 'Install FFMPEG'
-  #       inputs:
-  #         script: scripts/install_ffmpeg.sh
-  #     - task: CmdLine@2
-  #       displayName: 'Create Build Directory'
-  #       inputs:
-  #         script: mkdir -p build/$(BUILD_TYPE) && cd build/$(BUILD_TYPE)
-  #     - task: CmdLine@2
-  #       displayName: 'Configure'
-  #       inputs:
-  #         script: 'cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ../..'
-  #         workingDirectory: '$(BUILD_DIRECTORY)'
-  #     - task: CmdLine@2
-  #       displayName: 'Build'
-  #       inputs:
-  #         script: 'cmake --build . --config $(BUILD_TYPE)'
-  #         workingDirectory: $(BUILD_DIRECTORY)
-  #     - task: CmdLine@2
-  #       displayName: 'Run Unit Tests'
-  #       continueOnError: true
-  #       inputs:
-  #         script: 'ctest . --build-config $(BUILD_TYPE) --output-on-failure --timeout 60 -T Test -VV -j10'
-  #         workingDirectory: $(BUILD_DIRECTORY)
-
+    steps:
+      - task: UsePythonVersion@0
+        displayName: 'Set Python 3.x'
+        inputs:
+          versionSpec: '3.x'
+          addToPath: true
+          architecture: 'x64'
+      - task: CmdLine@2
+        displayName: 'Install Conan'
+        inputs:
+          script: |
+            python --version
+            sudo apt install -y python3-pip
+            pip install conan
+            source ~/.profile
+            conan --version
+      - task: CmdLine@2
+        displayName: 'Install Dependencies (required by examples only)'
+        inputs:
+          script: |
+            sudo apt install -y libgtk2.0-dev
+            sudo apt install -y libgl1-mesa-dev
+      - task: CmdLine@2
+        displayName: 'Install Ninja'
+        inputs:
+          script: |
+            sudo apt install -y ninja-build
+            echo 'Ninja Version: '
+            ninja --version
+      - task: CmdLine@2
+        displayName: 'Install FFMPEG'
+        inputs:
+          script: scripts/install_ffmpeg.sh
+      - task: CmdLine@2
+        displayName: 'Create Build Directory'
+        inputs:
+          script: mkdir -p build/$(BUILD_TYPE) && cd build/$(BUILD_TYPE)
+      - task: CmdLine@2
+        displayName: 'Configure'
+        inputs:
+          script: 'cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ../..'
+          workingDirectory: '$(BUILD_DIRECTORY)'
+      - task: CmdLine@2
+        displayName: 'Build'
+        inputs:
+          script: 'cmake --build . --config $(BUILD_TYPE)'
+          workingDirectory: $(BUILD_DIRECTORY)
+      - task: CmdLine@2
+        displayName: 'Run Unit Tests'
+        continueOnError: true
+        inputs:
+          script: 'ctest . --build-config $(BUILD_TYPE) --output-on-failure --timeout 60 -T Test -VV -j10'
+          workingDirectory: $(BUILD_DIRECTORY)
 
