@@ -43,7 +43,7 @@ stages:
         inputs:
           script: |
             python --version
-            sudo apt install python3-pip
+            sudo apt install -y python3-pip
             pip install conan
             source ~/.profile
             conan --version
@@ -51,9 +51,13 @@ stages:
         displayName: 'Install Ninja'
         inputs:
           script: |
-            sudo apt install ninja-build
+            sudo apt install -y ninja-build
             echo 'Ninja Version: '
             ninja --version
+      - task: CmdLine@2
+        displayName: 'Install GTK (required by OpenCV)'
+        inputs:
+          script: sudo apt install -y libgtk2.0-dev
       - task: CmdLine@2
         displayName: 'Install FFMPEG'
         inputs:
@@ -102,7 +106,7 @@ stages:
         inputs:
           script: |
             python --version
-            sudo apt install python3-pip
+            sudo apt install -y python3-pip
             pip install conan
             source ~/.profile
             conan --version
@@ -110,9 +114,13 @@ stages:
         displayName: 'Install Ninja'
         inputs:
           script: |
-            sudo apt install ninja-build
+            sudo apt install -y ninja-build
             echo 'Ninja Version: '
             ninja --version
+      - task: CmdLine@2
+        displayName: 'Install GTK (required by OpenCV)'
+        inputs:
+          script: sudo apt install -y libgtk2.0-dev
       - task: CmdLine@2
         displayName: 'Install FFMPEG'
         inputs:
