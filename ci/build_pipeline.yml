@@ -1,5 +1,6 @@
 trigger:
 - main
+- feature/*
 
 parameters:
   - name: BUILD_TYPE
@@ -39,6 +40,10 @@ stages:
             echo 'Ninja Version: '
             ninja --version
       - task: CmdLine@2
+        displayName: 'Create Build Directory'
+        inputs:
+          script: mkdir -p build/$(BUILD_TYPE) && cd build/$(BUILD_TYPE)
+      - task: CmdLine@2
         displayName: 'Configure'
         inputs:
           script: 'cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ../..'
@@ -49,7 +54,7 @@ stages:
           script: 'cmake --build . --config $(BUILD_TYPE)'
           workingDirectory: $(BUILD_DIRECTORY)
       - task: CmdLine@2
-        displayName: 'Test'
+        displayName: 'Run Unit Tests'
         continueOnError: true
         inputs:
           script: 'ctest . --build-config $(BUILD_TYPE) --output-on-failure --timeout 60 -T Test -VV -j10'
@@ -74,6 +79,10 @@ stages:
             sudo apt install ninja-build
             echo 'Ninja Version: '
             ninja --version
+      - task: CmdLine@2
+        displayName: 'Create Build Directory'
+        inputs:
+          script: mkdir -p build/$(BUILD_TYPE) && cd build/$(BUILD_TYPE)
       - task: CmdLine@2
         displayName: 'Configure'
         inputs:
