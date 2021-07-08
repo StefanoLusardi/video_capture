@@ -48,18 +48,18 @@ stages:
             source ~/.profile
             conan --version
       - task: CmdLine@2
+        displayName: 'Install Dependencies (required by examples only)'
+        inputs:
+          script: |
+            sudo apt install -y libgtk2.0-dev
+            sudo apt install -y libgl1-mesa-dev
+      - task: CmdLine@2
         displayName: 'Install Ninja'
         inputs:
           script: |
             sudo apt install -y ninja-build
             echo 'Ninja Version: '
             ninja --version
-      - task: CmdLine@2
-        displayName: 'Install Dependencies (required by examples only)'
-        inputs:
-          script: |
-            sudo apt install -y libgtk2.0-dev
-            sudo apt install -y libgl1-mesa-dev
       - task: CmdLine@2
         displayName: 'Install FFMPEG'
         inputs:
@@ -113,18 +113,18 @@ stages:
             source ~/.profile
             conan --version
       - task: CmdLine@2
+        displayName: 'Install Dependencies (required by examples only)'
+        inputs:
+          script: |
+            sudo apt install -y libgtk2.0-dev
+            sudo apt install -y libgl1-mesa-dev
+      - task: CmdLine@2
         displayName: 'Install Ninja'
         inputs:
           script: |
             sudo apt install -y ninja-build
             echo 'Ninja Version: '
             ninja --version
-      - task: CmdLine@2
-        displayName: 'Install Dependencies (required by examples only)'
-        inputs:
-          script: |
-            sudo apt install -y libgtk2.0-dev
-            sudo apt install -y libgl1-mesa-dev
       - task: CmdLine@2
         displayName: 'Install FFMPEG'
         inputs:
@@ -144,7 +144,7 @@ stages:
           script: 'cmake --build . --config $(BUILD_TYPE)'
           workingDirectory: $(BUILD_DIRECTORY)
       - task: CmdLine@2
-        displayName: 'Test'
+        displayName: 'Run Unit Tests'
         continueOnError: true
         inputs:
           script: 'ctest . --build-config $(BUILD_TYPE) --output-on-failure --timeout 60 -T Test -VV -j10'
