@@ -32,13 +32,24 @@ stages:
         CXX: g++-9
 
       steps:
+      # - task: CmdLine@2
+      #   displayName: 'Install Ninja'
+      #   inputs:
+      #     script: |
+      #       sudo apt install ninja-build
+      #       echo 'Ninja Version: '
+      #       ninja --version
       - task: CmdLine@2
-        displayName: 'Install Ninja'
+        displayName: 'Install Conan'
         inputs:
           script: |
-            sudo apt install ninja-build
-            echo 'Ninja Version: '
-            ninja --version
+            python --version
+            apt install python3-pip
+            echo 'pip Version: '
+            pip --version
+            pip install conan
+            echo 'conan Version: '
+            conan --version
       - task: CmdLine@2
         displayName: 'Install FFMPEG'
         inputs:
@@ -76,13 +87,24 @@ stages:
         CXX: g++-9
 
       steps:
+      # - task: CmdLine@2
+      #   displayName: 'Install Ninja'
+      #   inputs:
+      #     script: |
+      #       sudo apt install ninja-build
+      #       echo 'Ninja Version: '
+      #       ninja --version
       - task: CmdLine@2
-        displayName: 'Install Ninja'
+        displayName: 'Install Conan'
         inputs:
           script: |
-            sudo apt install ninja-build
-            echo 'Ninja Version: '
-            ninja --version
+            python --version
+            apt install python3-pip
+            echo 'pip Version: '
+            pip --version
+            pip install conan
+            echo 'conan Version: '
+            conan --version
       - task: CmdLine@2
         displayName: 'Install FFMPEG'
         inputs:
