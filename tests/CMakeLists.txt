@@ -3,9 +3,6 @@ message("::::::::::::::::::::::")
 message("::VideoCapture:: Tests")
 message("")
 
-#include(CTest)
-enable_testing()
-
 set(TARGET_NAME video_capture_tests)
 
 conan_cmake_configure(

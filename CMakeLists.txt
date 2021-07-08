@@ -28,8 +28,8 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
 endif()
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-option(VCPP_BUILD_SHARED "Build shared library" OFF)
-option(VCPP_BUILD_TESTS "Build library unit tests" OFF)
+option(VCPP_BUILD_SHARED "Build shared library" ON)
+option(VCPP_BUILD_TESTS "Build library unit tests" ON)
 option(VCPP_BUILD_EXAMPLES "Build library examples" ON)
 option(VCPP_BUILD_SANITIZERS "Build with sanitizers (address, undefined, memory, thread)" ON)
 
@@ -42,6 +42,7 @@ endif()
 add_subdirectory(video_capture)
 
 if(${VCPP_BUILD_TESTS})
+    enable_testing()
     add_subdirectory(tests)
 endif()
 
