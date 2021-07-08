@@ -32,23 +32,28 @@ stages:
         CXX: g++-9
 
       steps:
-      # - task: CmdLine@2
-      #   displayName: 'Install Ninja'
-      #   inputs:
-      #     script: |
-      #       sudo apt install ninja-build
-      #       echo 'Ninja Version: '
-      #       ninja --version
+      - task: UsePythonVersion@0
+        displayName: 'Set Python 3.x'
+        inputs:
+          versionSpec: '3.x'
+          addToPath: true
+          architecture: 'x64'
       - task: CmdLine@2
         displayName: 'Install Conan'
         inputs:
           script: |
-            alias python=python3
             python --version
             sudo apt install python3-pip
             pip install conan
             source ~/.profile
             conan --version
+      - task: CmdLine@2
+        displayName: 'Install Ninja'
+        inputs:
+          script: |
+            sudo apt install ninja-build
+            echo 'Ninja Version: '
+            ninja --version
       - task: CmdLine@2
         displayName: 'Install FFMPEG'
         inputs:
@@ -86,23 +91,28 @@ stages:
         CXX: g++-9
 
       steps:
-      # - task: CmdLine@2
-      #   displayName: 'Install Ninja'
-      #   inputs:
-      #     script: |
-      #       sudo apt install ninja-build
-      #       echo 'Ninja Version: '
-      #       ninja --version
+      - task: UsePythonVersion@0
+        displayName: 'Set Python 3.x'
+        inputs:
+          versionSpec: '3.x'
+          addToPath: true
+          architecture: 'x64'
       - task: CmdLine@2
         displayName: 'Install Conan'
         inputs:
           script: |
-            alias python=python3
             python --version
             sudo apt install python3-pip
             pip install conan
             source ~/.profile
             conan --version
+      - task: CmdLine@2
+        displayName: 'Install Ninja'
+        inputs:
+          script: |
+            sudo apt install ninja-build
+            echo 'Ninja Version: '
+            ninja --version
       - task: CmdLine@2
         displayName: 'Install FFMPEG'
         inputs:
