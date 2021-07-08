@@ -1,14 +1,92 @@
 trigger:
 - main
 
-pool:
-  vmImage: ubuntu-latest
+parameters:
+  - name: BUILD_TYPE
+    displayName: Build Type
+    type: string
+    default: Release
+    values:
+    - Release
+    - Debug
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+variables:
+  BUILD_TYPE: ${{ parameters.BUILD_TYPE }}
+  BUILD_DIRECTORY: $(Build.SourcesDirectory)/build/$(BUILD_TYPE)
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+stages:
+
+  - stage: Build
+    jobs:
+
+    - job: Ubuntu1804_GCC9
+      dependsOn: []
+      timeoutInMinutes: 10
+
+      pool:
+        vmImage: 'ubuntu-18.04'
+      
+      variables:
+        CC: gcc-9
+        CXX: g++-9
+
+      steps:
+      - task: CmdLine@2
+        displayName: 'Install Ninja'
+        inputs:
+          script: |
+            sudo apt install ninja-build
+            echo 'Ninja Version: '
+            ninja --version
+      - task: CmdLine@2
+        displayName: 'Configure'
+        inputs:
+          script: 'cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ../..'
+          workingDirectory: '$(BUILD_DIRECTORY)'
+      - task: CmdLine@2
+        displayName: 'Build'
+        inputs:
+          script: 'cmake --build . --config $(BUILD_TYPE)'
+          workingDirectory: $(BUILD_DIRECTORY)
+      - task: CmdLine@2
+        displayName: 'Test'
+        continueOnError: true
+        inputs:
+          script: 'ctest . --build-config $(BUILD_TYPE) --output-on-failure --timeout 60 -T Test -VV -j10'
+          workingDirectory: $(BUILD_DIRECTORY)
+
+    - job: Ubuntu2004_GCC9
+      dependsOn: []
+      timeoutInMinutes: 10
+
+      pool:
+        vmImage: 'ubuntu-20.04'
+      
+      variables:
+        CC: gcc-9
+        CXX: g++-9
+
+      steps:
+      - task: CmdLine@2
+        displayName: 'Install Ninja'
+        inputs:
+          script: |
+            sudo apt install ninja-build
+            echo 'Ninja Version: '
+            ninja --version
+      - task: CmdLine@2
+        displayName: 'Configure'
+        inputs:
+          script: 'cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ../..'
+          workingDirectory: '$(BUILD_DIRECTORY)'
+      - task: CmdLine@2
+        displayName: 'Build'
+        inputs:
+          script: 'cmake --build . --config $(BUILD_TYPE)'
+          workingDirectory: $(BUILD_DIRECTORY)
+      - task: CmdLine@2
+        displayName: 'Test'
+        continueOnError: true
+        inputs:
+          script: 'ctest . --build-config $(BUILD_TYPE) --output-on-failure --timeout 60 -T Test -VV -j10'
+          workingDirectory: $(BUILD_DIRECTORY)
