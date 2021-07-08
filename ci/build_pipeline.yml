@@ -1,5 +1,6 @@
 trigger:
 - main
+- feature/*
 
 parameters:
   - name: BUILD_TYPE
@@ -31,13 +32,42 @@ stages:
         CXX: g++-9
 
       steps:
+      - task: UsePythonVersion@0
+        displayName: 'Set Python 3.x'
+        inputs:
+          versionSpec: '3.x'
+          addToPath: true
+          architecture: 'x64'
+      - task: CmdLine@2
+        displayName: 'Install Conan'
+        inputs:
+          script: |
+            python --version
+            sudo apt install -y python3-pip
+            pip install conan
+            source ~/.profile
+            conan --version
       - task: CmdLine@2
         displayName: 'Install Ninja'
         inputs:
           script: |
-            sudo apt install ninja-build
+            sudo apt install -y ninja-build
             echo 'Ninja Version: '
             ninja --version
+      - task: CmdLine@2
+        displayName: 'Install Dependencies (required by examples only)'
+        inputs:
+          script: |
+            sudo apt install -y libgtk2.0-dev
+            sudo apt install -y libgl1-mesa-dev
+      - task: CmdLine@2
+        displayName: 'Install FFMPEG'
+        inputs:
+          script: scripts/install_ffmpeg.sh
+      - task: CmdLine@2
+        displayName: 'Create Build Directory'
+        inputs:
+          script: mkdir -p build/$(BUILD_TYPE) && cd build/$(BUILD_TYPE)
       - task: CmdLine@2
         displayName: 'Configure'
         inputs:
@@ -49,7 +79,7 @@ stages:
           script: 'cmake --build . --config $(BUILD_TYPE)'
           workingDirectory: $(BUILD_DIRECTORY)
       - task: CmdLine@2
-        displayName: 'Test'
+        displayName: 'Run Unit Tests'
         continueOnError: true
         inputs:
           script: 'ctest . --build-config $(BUILD_TYPE) --output-on-failure --timeout 60 -T Test -VV -j10'
@@ -67,13 +97,42 @@ stages:
         CXX: g++-9
 
       steps:
+      - task: UsePythonVersion@0
+        displayName: 'Set Python 3.x'
+        inputs:
+          versionSpec: '3.x'
+          addToPath: true
+          architecture: 'x64'
+      - task: CmdLine@2
+        displayName: 'Install Conan'
+        inputs:
+          script: |
+            python --version
+            sudo apt install -y python3-pip
+            pip install conan
+            source ~/.profile
+            conan --version
       - task: CmdLine@2
         displayName: 'Install Ninja'
         inputs:
           script: |
-            sudo apt install ninja-build
+            sudo apt install -y ninja-build
             echo 'Ninja Version: '
             ninja --version
+      - task: CmdLine@2
+        displayName: 'Install Dependencies (required by examples only)'
+        inputs:
+          script: |
+            sudo apt install -y libgtk2.0-dev
+            sudo apt install -y libgl1-mesa-dev
+      - task: CmdLine@2
+        displayName: 'Install FFMPEG'
+        inputs:
+          script: scripts/install_ffmpeg.sh
+      - task: CmdLine@2
+        displayName: 'Create Build Directory'
+        inputs:
+          script: mkdir -p build/$(BUILD_TYPE) && cd build/$(BUILD_TYPE)
       - task: CmdLine@2
         displayName: 'Configure'
         inputs:
