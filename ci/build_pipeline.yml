@@ -55,9 +55,11 @@ stages:
             echo 'Ninja Version: '
             ninja --version
       - task: CmdLine@2
-        displayName: 'Install GTK (required by OpenCV)'
+        displayName: 'Install Dependencies (required by examples only)'
         inputs:
-          script: sudo apt install -y libgtk2.0-dev
+          script: |
+            sudo apt install -y libgtk2.0-dev
+            sudo apt install -y libgl1-mesa-dev
       - task: CmdLine@2
         displayName: 'Install FFMPEG'
         inputs:
@@ -118,9 +120,11 @@ stages:
             echo 'Ninja Version: '
             ninja --version
       - task: CmdLine@2
-        displayName: 'Install GTK (required by OpenCV)'
+        displayName: 'Install Dependencies (required by examples only)'
         inputs:
-          script: sudo apt install -y libgtk2.0-dev
+          script: |
+            sudo apt install -y libgtk2.0-dev
+            sudo apt install -y libgl1-mesa-dev
       - task: CmdLine@2
         displayName: 'Install FFMPEG'
         inputs:
