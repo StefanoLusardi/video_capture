@@ -19,6 +19,7 @@ variables:
 jobs:
 
   - job: Ubuntu
+    condition: false
     strategy:
       matrix:
         18.04 gcc9: 
@@ -127,6 +128,12 @@ jobs:
       vmImage: $(VERSION)
 
     steps:
+      - task: CmdLine@2
+        displayName: 'Install FFMPEG (with Chocolatey)'
+        inputs:
+          script: |
+            choco install --accept-license -y ffmpeg-shared
+            ffmpeg --version
       - task: CmdLine@2
         displayName: 'Install Ninja'
         inputs:
