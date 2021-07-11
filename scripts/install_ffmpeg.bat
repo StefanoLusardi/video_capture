@@ -17,6 +17,6 @@ del C:\ffmpeg\ffmpeg.7z
 setx FFMPEG_DIR C:\ffmpeg\ffmpeg
 
 :: Check installation
-%FFMPEG_DIR%\bin\ffmpeg -version
+%%FFMPEG_DIR%%\bin\ffmpeg -version
 
 echo "FFMPEG libraries installed"
