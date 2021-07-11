@@ -133,15 +133,13 @@ jobs:
         inputs:
           script: |
             choco install --accept-license -y ffmpeg-shared
+            cd "C:\Program Files\FFmpeg\bin"
             echo on
-            dir "C:\Program Files"
-            cd "C:\Program Files\ffmpeg"
-            dir "C:\Program Files\ffmpeg"
-            setx FFMPEG_DIR "C:\Program Files\ffmpeg"
             ffmpeg --version
+            setx FFMPEG_DIR "C:\Program Files\ffmpeg"
             echo --1--
             echo %FFMPEG_DIR%
-            cd %FFMPEG_DIR%
+            cd %%FFMPEG_DIR%%
             echo --2--
             cd bin
             echo --3--
