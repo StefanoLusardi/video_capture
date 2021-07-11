@@ -134,8 +134,12 @@ jobs:
           script: |
             choco install --accept-license -y ffmpeg-shared
             setx FFMPEG_DIR "C:\Program Files\ffmpeg"
+            cd "C:\Program Files\ffmpeg\bin"
+            echo ffmpeg --version
             echo --1--
-            cd %FFMPEG_DIR%
+            echo %FFMPEG_DIR%
+            echo %%FFMPEG_DIR%%
+            cd %%FFMPEG_DIR%%
             echo --2--
             cd bin
             echo --3--
