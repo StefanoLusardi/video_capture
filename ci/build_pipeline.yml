@@ -133,7 +133,7 @@ jobs:
         inputs:
           script: |
             choco install --accept-license -y ffmpeg-shared
-            setx FFMPEG_DIR 'C:\Program Files\ffmpeg'
+            setx FFMPEG_DIR "C:\Program Files\ffmpeg"
             echo --1--
             cd %FFMPEG_DIR%
             echo --2--
@@ -160,6 +160,7 @@ jobs:
             conan --version
       - task: CmdLine@2
         displayName: 'Install FFMPEG'
+        enabled: false
         inputs:
           script: scripts/install_ffmpeg.bat
       - task: CmdLine@2
