@@ -129,6 +129,14 @@ jobs:
 
     steps:
       - task: CmdLine@2
+        displayName: 'Install FFMPEG'
+        inputs:
+          script: scripts/install_ffmpeg.bat
+      - task: CmdLine@2
+        displayName: 'Check FFMPEG'
+        inputs:
+          script: '%FFMPEG_DIR%\bin\ffmpeg -version'
+      - task: CmdLine@2
         displayName: 'Install Ninja'
         inputs:
           script: |
@@ -146,11 +154,6 @@ jobs:
           script: |
             pip install conan
             conan --version
-      - task: CmdLine@2
-        displayName: 'Install FFMPEG'
-        enabled: false
-        inputs:
-          script: scripts/install_ffmpeg.bat
       - task: CmdLine@2
         displayName: 'Create Build Directory'
         inputs:
