@@ -135,7 +135,10 @@ jobs:
       - task: CmdLine@2
         displayName: 'Check FFMPEG'
         inputs:
-          script: '%FFMPEG_DIR%\bin\ffmpeg -version'
+          script: |
+            set
+            echo ================================
+            'C:\ffmpeg\ffmpeg\bin\ffmpeg -version'
       - task: CmdLine@2
         displayName: 'Install Ninja'
         inputs:
