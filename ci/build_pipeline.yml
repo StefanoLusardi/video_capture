@@ -132,6 +132,10 @@ jobs:
         displayName: 'Install FFMPEG'
         inputs:
           script: scripts/install_ffmpeg.bat
+      - task: PowerShell@2
+        inputs:
+          targetType: 'inline'
+          script: '##vso[task.setvariable variable=FFMPEG_DIR]"C:\ffmpeg\ffmpeg"'
       - task: CmdLine@2
         displayName: 'Check FFMPEG'
         inputs:
