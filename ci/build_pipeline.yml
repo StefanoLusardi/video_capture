@@ -19,7 +19,6 @@ variables:
 jobs:
 
   - job: Ubuntu
-    condition: false
     strategy:
       matrix:
         18.04 gcc9: 
@@ -54,7 +53,7 @@ jobs:
           VERSION: 'ubuntu-20.04'
           CC: 'clang-12'
           CXX: 'clang++-12'
-      
+
     pool:
       vmImage: $(VERSION)
 
@@ -124,7 +123,7 @@ jobs:
           MSVC_SCRIPT: '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64'
           CC: 'cl'
           CXX: 'cl'
-        win2019 Mingw 8.1: 
+        win2019 mingw 8.1: 
           VERSION: 'windows-2019'
           MSVC_SCRIPT: ''
           CC: 'gcc'
@@ -134,7 +133,7 @@ jobs:
           MSVC_SCRIPT: '"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64'
           CC: 'cl'
           CXX: 'cl'
-        win2016 Mingw 8.1: 
+        win2016 mingw 8.1: 
           VERSION: 'vs2017-win2016'
           MSVC_SCRIPT: ''
           CC: 'gcc'
