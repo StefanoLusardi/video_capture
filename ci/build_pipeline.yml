@@ -129,6 +129,8 @@ jobs:
 
     variables:
       FFMPEG_DIR: 'C:\ffmpeg\ffmpeg'
+      MSVC_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise'
+      MSVC_SCRIPT: '$(MSVC_DIR)\Common7\Tools\VsDevCmd.bat'
 
     steps:
       - task: CmdLine@2
@@ -162,12 +164,16 @@ jobs:
       - task: CmdLine@2
         displayName: 'Configure'
         inputs:
-          script: 'cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DVCPP_BUILD_EXAMPLES=OFF ../..'
+          script: |
+            'call $(MSVC_SCRIPT) -arch=amd64 -host_arch=amd64'
+            'cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DVCPP_BUILD_EXAMPLES=OFF ../..'
           workingDirectory: '$(BUILD_DIRECTORY)'
       - task: CmdLine@2
         displayName: 'Build'
         inputs:
-          script: 'cmake --build . --config $(BUILD_TYPE)'
+          script: |
+            'call $(MSVC_SCRIPT) -arch=amd64 -host_arch=amd64'
+            'cmake --build . --config $(BUILD_TYPE)'
           workingDirectory: $(BUILD_DIRECTORY)
       - task: CmdLine@2
         displayName: 'Run Unit Tests'
