@@ -129,22 +129,6 @@ jobs:
 
     steps:
       - task: CmdLine@2
-        displayName: 'Install FFMPEG (with Chocolatey)'
-        inputs:
-          script: |
-            choco install --accept-license -y ffmpeg-shared
-            cd "C:\Program Files\FFmpeg\bin"
-            echo on
-            ffmpeg --version
-            setx FFMPEG_DIR "C:\Program Files\ffmpeg"
-            echo --1--
-            echo %FFMPEG_DIR%
-            cd %%FFMPEG_DIR%%
-            echo --2--
-            cd bin
-            echo --3--
-            ffmpeg --version
-      - task: CmdLine@2
         displayName: 'Install Ninja'
         inputs:
           script: |
