@@ -136,6 +136,8 @@ jobs:
         displayName: 'Check FFMPEG'
         inputs:
           script: |
+            set
+            echo ================================0
             cd /d c:\
             cd C:\ffmpeg && dir
             echo ================================1
@@ -171,7 +173,7 @@ jobs:
       - task: CmdLine@2
         displayName: 'Configure'
         inputs:
-          script: 'cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ../..'
+          script: 'cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DVCPP_BUILD_EXAMPLES=OFF ../..'
           workingDirectory: '$(BUILD_DIRECTORY)'
       - task: CmdLine@2
         displayName: 'Build'
