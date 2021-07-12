@@ -121,17 +121,30 @@ jobs:
       matrix:
         win2019 vs2019: 
           VERSION: 'windows-2019'
-          MSVC_VER: '2019'
+          MSVC_SCRIPT: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat -arch=amd64 -host_arch=amd64'
+          CC: 'cl'
+          CXX: 'cl'
+        win2019 Mingw 8.1: 
+          VERSION: 'windows-2019'
+          MSVC_SCRIPT: ''
+          CC: 'gcc'
+          CXX: 'g++'
         win2016 vs2017: 
           VERSION: 'vs2017-win2016'
-          MSVC_VER: '2017'
+          MSVC_SCRIPT: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\Tools\VsDevCmd.bat -arch=amd64 -host_arch=amd64'
+          CC: 'cl'
+          CXX: 'cl'
+        win2016 Mingw 8.1: 
+          VERSION: 'vs2017-win2016'
+          MSVC_SCRIPT: ''
+          CC: 'gcc'
+          CXX: 'g++'
 
     pool:
       vmImage: $(VERSION)
 
     variables:
       FFMPEG_DIR: 'C:\ffmpeg\ffmpeg'
-      MSVC_SCRIPT: 'C:\Program Files (x86)\Microsoft Visual Studio\$(MSVC_VER)\Enterprise\Common7\Tools\VsDevCmd.bat'
 
     steps:
       - task: CmdLine@2
@@ -166,14 +179,15 @@ jobs:
         displayName: 'Configure'
         inputs:
           script: |
-            call $(MSVC_SCRIPT) -arch=amd64 -host_arch=amd64
+            set
+            call $(MSVC_SCRIPT)
             cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DVCPP_BUILD_EXAMPLES=OFF ../..
           workingDirectory: '$(BUILD_DIRECTORY)'
       - task: CmdLine@2
         displayName: 'Build'
         inputs:
           script: |
-            call $(MSVC_SCRIPT) -arch=amd64 -host_arch=amd64
+            call $(MSVC_SCRIPT)
             cmake --build . --config $(BUILD_TYPE)
           workingDirectory: $(BUILD_DIRECTORY)
       - task: CmdLine@2
