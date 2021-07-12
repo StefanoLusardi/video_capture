@@ -127,29 +127,14 @@ jobs:
     pool:
       vmImage: $(VERSION)
 
+    variables:
+      FFMPEG_DIR: 'C:\ffmpeg\ffmpeg'
+
     steps:
       - task: CmdLine@2
         displayName: 'Install FFMPEG'
         inputs:
           script: scripts/install_ffmpeg.bat
-      - task: PowerShell@2
-        inputs:
-          targetType: 'inline'
-          script: '##vso[task.setvariable variable=FFMPEG_DIR]"C:\ffmpeg\ffmpeg"'
-      - task: CmdLine@2
-        displayName: 'Check FFMPEG'
-        inputs:
-          script: |
-            set
-            echo ================================0
-            cd /d c:\
-            cd C:\ffmpeg && dir
-            echo ================================1
-            cd C:\ffmpeg\ffmpeg && dir
-            echo ================================2
-            cd C:\ffmpeg\ffmpeg\bin && dir
-            echo ================================3
-            C:\ffmpeg\ffmpeg\bin\ffmpeg -version
       - task: CmdLine@2
         displayName: 'Install Ninja'
         inputs:
