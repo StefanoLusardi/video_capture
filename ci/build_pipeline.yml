@@ -136,6 +136,7 @@ jobs:
         displayName: 'Check FFMPEG'
         inputs:
           script: |
+            cd /d c:\
             cd C:\ffmpeg && dir
             echo ================================1
             cd C:\ffmpeg\ffmpeg && dir
