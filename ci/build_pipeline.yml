@@ -143,7 +143,7 @@ jobs:
             echo ================================2
             cd C:\ffmpeg\ffmpeg\bin && dir
             echo ================================3
-            'C:\ffmpeg\ffmpeg\bin\ffmpeg -version'
+            C:\ffmpeg\ffmpeg\bin\ffmpeg -version
       - task: CmdLine@2
         displayName: 'Install Ninja'
         inputs:
