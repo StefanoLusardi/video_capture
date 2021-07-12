@@ -121,7 +121,7 @@ jobs:
       matrix:
         win2019 vs2019: 
           VERSION: 'windows-2019'
-          MSVC_SCRIPT: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat -arch=amd64 -host_arch=amd64'
+          MSVC_SCRIPT: '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64'
           CC: 'cl'
           CXX: 'cl'
         win2019 Mingw 8.1: 
@@ -131,7 +131,7 @@ jobs:
           CXX: 'g++'
         win2016 vs2017: 
           VERSION: 'vs2017-win2016'
-          MSVC_SCRIPT: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\Tools\VsDevCmd.bat -arch=amd64 -host_arch=amd64'
+          MSVC_SCRIPT: '"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64'
           CC: 'cl'
           CXX: 'cl'
         win2016 Mingw 8.1: 
@@ -179,7 +179,6 @@ jobs:
         displayName: 'Configure'
         inputs:
           script: |
-            set
             call $(MSVC_SCRIPT)
             cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DVCPP_BUILD_EXAMPLES=OFF ../..
           workingDirectory: '$(BUILD_DIRECTORY)'
