@@ -10,11 +10,26 @@ parameters:
     values:
     - Release
     - Debug
+  - name: UNIT_TESTS
+    displayName: Run Unit Tests
+    type: boolean
+    default: true
+  - name: EXAMPLES
+    displayName: Run Examples
+    type: boolean
+    default: true
+  - name: SANITIZERS
+    displayName: Use Sanitizers (Tests and Examples)
+    type: boolean
+    default: true
 
 variables:
   BUILD_TYPE: ${{ parameters.BUILD_TYPE }}
+  UNIT_TESTS: ${{ parameters.UNIT_TESTS }}
+  EXAMPLES: ${{ parameters.EXAMPLES }}
+  SANITIZERS: ${{ parameters.SANITIZERS }}
   BUILD_DIRECTORY: $(Build.SourcesDirectory)/build/$(BUILD_TYPE)
-
+  NINJA_STATUS: '[%f/%t] (%e s) '
 
 jobs:
 
