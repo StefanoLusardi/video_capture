@@ -10,28 +10,73 @@ parameters:
     values:
     - Release
     - Debug
+  - name: UNIT_TESTS
+    displayName: Run Unit Tests
+    type: boolean
+    default: true
+  - name: EXAMPLES
+    displayName: Run Examples
+    type: boolean
+    default: true
+  - name: SANITIZERS
+    displayName: Use Sanitizers (Tests and Examples)
+    type: boolean
+    default: true
 
 variables:
   BUILD_TYPE: ${{ parameters.BUILD_TYPE }}
+  UNIT_TESTS: ${{ parameters.UNIT_TESTS }}
+  EXAMPLES: ${{ parameters.EXAMPLES }}
+  SANITIZERS: ${{ parameters.SANITIZERS }}
   BUILD_DIRECTORY: $(Build.SourcesDirectory)/build/$(BUILD_TYPE)
+  NINJA_STATUS: '[%f/%t] (%e s) '
 
-stages:
+jobs:
 
-  - stage: Build
-    jobs:
+  - job: Ubuntu
+    strategy:
+      matrix:
+        18.04 gcc9: 
+          VERSION: 'ubuntu-18.04'
+          CC: 'gcc-9'
+          CXX: 'g++-9'
+        18.04 gcc10: 
+          VERSION: 'ubuntu-18.04'
+          CC: 'gcc-10'
+          CXX: 'g++-10'
+        18.04 clang9: 
+          VERSION: 'ubuntu-18.04'
+          CC: 'clang-9'
+          CXX: 'clang++-9'
+        20.04 gcc9: 
+          VERSION: 'ubuntu-20.04'
+          CC: 'gcc-9'
+          CXX: 'g++-9'
+        20.04 gcc10: 
+          VERSION: 'ubuntu-20.04'
+          CC: 'gcc-10'
+          CXX: 'g++-10'
+        20.04 clang10: 
+          VERSION: 'ubuntu-20.04'
+          CC: 'clang-10'
+          CXX: 'clang++-10'
+        20.04 clang11: 
+          VERSION: 'ubuntu-20.04'
+          CC: 'clang-11'
+          CXX: 'clang++-11'
+        20.04 clang12: 
+          VERSION: 'ubuntu-20.04'
+          CC: 'clang-12'
+          CXX: 'clang++-12'
 
-    - job: Ubuntu1804_GCC9
-      dependsOn: []
-      timeoutInMinutes: 10
+    pool:
+      vmImage: $(VERSION)
 
-      pool:
-        vmImage: 'ubuntu-18.04'
-      
-      variables:
-        CC: gcc-9
-        CXX: g++-9
+    variables:
+      CC: $(CC)
+      CXX: $(CXX)
 
-      steps:
+    steps:
       - task: UsePythonVersion@0
         displayName: 'Set Python 3.x'
         inputs:
@@ -48,18 +93,18 @@ stages:
             source ~/.profile
             conan --version
       - task: CmdLine@2
+        displayName: 'Install Dependencies (required by examples only)'
+        inputs:
+          script: |
+            sudo apt install -y libgtk2.0-dev
+            sudo apt install -y libgl1-mesa-dev
+      - task: CmdLine@2
         displayName: 'Install Ninja'
         inputs:
           script: |
             sudo apt install -y ninja-build
             echo 'Ninja Version: '
             ninja --version
-      - task: CmdLine@2
-        displayName: 'Install Dependencies (required by examples only)'
-        inputs:
-          script: |
-            sudo apt install -y libgtk2.0-dev
-            sudo apt install -y libgl1-mesa-dev
       - task: CmdLine@2
         displayName: 'Install FFMPEG'
         inputs:
@@ -85,18 +130,47 @@ stages:
           script: 'ctest . --build-config $(BUILD_TYPE) --output-on-failure --timeout 60 -T Test -VV -j10'
           workingDirectory: $(BUILD_DIRECTORY)
 
-    - job: Ubuntu2004_GCC9
-      dependsOn: []
-      timeoutInMinutes: 10
+  - job: Windows
+    strategy:
+      matrix:
+        win2019 vs2019: 
+          VERSION: 'windows-2019'
+          MSVC_SCRIPT: '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64'
+          CC: 'cl'
+          CXX: 'cl'
+        win2019 mingw 8.1: 
+          VERSION: 'windows-2019'
+          MSVC_SCRIPT: ''
+          CC: 'gcc'
+          CXX: 'g++'
+        win2016 vs2017: 
+          VERSION: 'vs2017-win2016'
+          MSVC_SCRIPT: '"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64'
+          CC: 'cl'
+          CXX: 'cl'
+        win2016 mingw 8.1: 
+          VERSION: 'vs2017-win2016'
+          MSVC_SCRIPT: ''
+          CC: 'gcc'
+          CXX: 'g++'
 
-      pool:
-        vmImage: 'ubuntu-20.04'
-      
-      variables:
-        CC: gcc-9
-        CXX: g++-9
+    pool:
+      vmImage: $(VERSION)
 
-      steps:
+    variables:
+      FFMPEG_DIR: 'C:\ffmpeg\ffmpeg'
+
+    steps:
+      - task: CmdLine@2
+        displayName: 'Install FFMPEG'
+        inputs:
+          script: scripts/install_ffmpeg.bat
+      - task: CmdLine@2
+        displayName: 'Install Ninja'
+        inputs:
+          script: |
+            choco install --accept-license -y Ninja
+            ninja --version
       - task: UsePythonVersion@0
         displayName: 'Set Python 3.x'
         inputs:
@@ -107,44 +181,30 @@ stages:
         displayName: 'Install Conan'
         inputs:
           script: |
-            python --version
-            sudo apt install -y python3-pip
             pip install conan
-            source ~/.profile
             conan --version
-      - task: CmdLine@2
-        displayName: 'Install Ninja'
-        inputs:
-          script: |
-            sudo apt install -y ninja-build
-            echo 'Ninja Version: '
-            ninja --version
-      - task: CmdLine@2
-        displayName: 'Install Dependencies (required by examples only)'
-        inputs:
-          script: |
-            sudo apt install -y libgtk2.0-dev
-            sudo apt install -y libgl1-mesa-dev
-      - task: CmdLine@2
-        displayName: 'Install FFMPEG'
-        inputs:
-          script: scripts/install_ffmpeg.sh
       - task: CmdLine@2
         displayName: 'Create Build Directory'
         inputs:
-          script: mkdir -p build/$(BUILD_TYPE) && cd build/$(BUILD_TYPE)
+          script: |
+            mkdir build && cd build
+            mkdir $(BUILD_TYPE) && cd $(BUILD_TYPE)
       - task: CmdLine@2
         displayName: 'Configure'
         inputs:
-          script: 'cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ../..'
+          script: |
+            call $(MSVC_SCRIPT)
+            cmake -G "Ninja" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DVCPP_BUILD_EXAMPLES=OFF ../..
           workingDirectory: '$(BUILD_DIRECTORY)'
       - task: CmdLine@2
         displayName: 'Build'
         inputs:
-          script: 'cmake --build . --config $(BUILD_TYPE)'
+          script: |
+            call $(MSVC_SCRIPT)
+            cmake --build . --config $(BUILD_TYPE)
           workingDirectory: $(BUILD_DIRECTORY)
       - task: CmdLine@2
-        displayName: 'Test'
+        displayName: 'Run Unit Tests'
         continueOnError: true
         inputs:
           script: 'ctest . --build-config $(BUILD_TYPE) --output-on-failure --timeout 60 -T Test -VV -j10'
