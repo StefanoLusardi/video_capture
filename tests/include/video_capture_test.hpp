@@ -1,17 +1,22 @@
 #pragma once 
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
+#include <video_capture/video_capture.hpp>
+
 
 namespace vc::test
 {
 
-class vc_fixture : public ::testing::Test
+class video_capture_test : public ::testing::Test
 {
 protected:
-    explicit vc_fixture() { }
-    virtual ~vc_fixture() { }
+    explicit video_capture_test() : vc{ std::make_unique<vc::video_capture>() } { }
+    virtual ~video_capture_test() { vc->release(); }
+
     virtual void SetUp() override { }
     virtual void TearDown() override { }
+
+    std::unique_ptr<vc::video_capture> vc;
 
 private:
     template<typename... Args>

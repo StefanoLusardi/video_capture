@@ -23,16 +23,28 @@ list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR}/tests)
 
 find_package(GTest COMPONENTS gtest REQUIRED QUIET)
 
+set(VCPP_TEST_SOURCES 
+    src/video_capture_test.cpp
+    src/raw_frame_test.cpp
+)
+
+set(VCPP_TEST_HEADERS 
+    include/video_capture_test.hpp
+    include/raw_frame_test.hpp
+)
+
 add_executable(${TARGET_NAME}
 	src/main.cpp
-	src/vc_test.cpp
-	src/vc_fixture.hpp
+	${VCPP_TEST_HEADERS}
+	${VCPP_TEST_SOURCES}
 )
 
 target_link_libraries(${TARGET_NAME} 
 	PRIVATE video_capture 
 	PRIVATE GTest::gtest
 )
+
+target_include_directories(${TARGET_NAME} PRIVATE include)
 
 include(GoogleTest)
 gtest_discover_tests(${TARGET_NAME})

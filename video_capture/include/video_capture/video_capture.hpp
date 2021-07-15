@@ -31,8 +31,8 @@ class API_VIDEO_CAPTURE video_capture
     class logger;
 
 public:
-    explicit video_capture();
-    ~video_capture();
+    explicit video_capture() noexcept;
+    ~video_capture() noexcept;
     
     using log_callback_t = std::function<void(const std::string&)>;
     void set_log_callback(const log_callback_t& cb, const log_level& level = log_level::all);    

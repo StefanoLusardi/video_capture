@@ -19,7 +19,7 @@ extern "C"
 
 namespace vc
 {
-video_capture::video_capture() 
+video_capture::video_capture() noexcept
     : _is_initialized{ false }
     , _logger{std::make_shared<logger>()} 
     , _hw{std::make_unique<hw_acceleration>(_logger)}
@@ -28,7 +28,7 @@ video_capture::video_capture()
     av_log_set_level(0);
 }
 
-video_capture::~video_capture()
+video_capture::~video_capture() noexcept
 {
     release();
 }
@@ -137,6 +137,7 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
     log_info(_logger, "Frame Rate:", (get_fps() != std::nullopt ? get_fps().value() : -1), "fps");
     log_info(_logger, "Duration:", (get_duration() != std::nullopt ? std::chrono::duration_cast<std::chrono::seconds>(get_duration().value()).count() : -1), "sec");
     log_info(_logger, "Number of frames:", (get_frame_count() != std::nullopt ? get_frame_count().value() : -1));
+    log_info(_logger, "Video Capture is initialized");
 
     return true;
 }
