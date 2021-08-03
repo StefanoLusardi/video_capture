@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 	// Read video frame by frame
 	size_t num_decoded_frames = 0;
 	uint8_t* frame_data = {};
-	while(vc.next(&frame_data))
+	while(vc.read(&frame_data))
 	{
 		++num_decoded_frames;
 		// Use frame_data array

@@ -293,7 +293,7 @@ bool video_capture::decode()
     return true;
 }
 
-bool video_capture::retrieve(uint8_t** data, double* pts)
+bool video_capture::retrieve(uint8_t** data)
 {
     _sws_ctx = sws_getCachedContext(_sws_ctx,
         _codec_ctx->width, _codec_ctx->height, (AVPixelFormat)_tmp_frame->format,
@@ -317,9 +317,6 @@ bool video_capture::retrieve(uint8_t** data, double* pts)
         log_error(_logger, "sws_scale() worked out unexpectedly");
         return false;
     }
-
-    const auto time_base = _format_ctx->streams[_stream_index]->time_base;
-    *pts = _tmp_frame->best_effort_timestamp * static_cast<double>(time_base.num) / static_cast<double>(time_base.den);
 
     *data = _dst_frame->data[0];
     return true;
@@ -358,7 +355,7 @@ bool video_capture::retrieve_frame(raw_frame* frame)
     return true;
 }
 
-bool video_capture::next(uint8_t** data, double* pts)
+bool video_capture::read(uint8_t** data)
 {
     if(!grab())
         return false;
@@ -366,10 +363,10 @@ bool video_capture::next(uint8_t** data, double* pts)
     if(!decode())
         return false;
 
-    return retrieve(data, pts);
+    return retrieve(data);
 }
 
-bool video_capture::next_frame(raw_frame* frame)
+bool video_capture::read_frame(raw_frame* frame)
 {
     if(!grab())
         return false;
