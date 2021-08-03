@@ -58,7 +58,7 @@ void run_ffmpeg(const char* video_path, vc::decode_support decode_support, const
 	const auto sleep_time = static_cast<int>(fps.value_or(1));
 	cv::Mat frame(h, w, CV_8UC3);
 	
-	while(vc.next(&frame.data))
+	while(vc.read(&frame.data))
 	{
 		cv::imshow(name, frame);
 		cv::waitKey(sleep_time);
@@ -78,14 +78,14 @@ int main(int argc, char** argv)
 	// auto video_path = argv[1];
 	
 	// std::thread ffmpeg_thread_hw([video_path]{run_ffmpeg(video_path, vc::decode_support::HW, "HW");});
-	std::thread ffmpeg_thread_sw([video_path]{run_ffmpeg(video_path, vc::decode_support::SW, "SW");});
+	//std::thread ffmpeg_thread_sw([video_path]{run_ffmpeg(video_path, vc::decode_support::SW, "SW");});
 	std::thread opencv_thread([video_path]{run_opencv(video_path);});
 	
 	// if(ffmpeg_thread_hw.joinable())
 	// 	ffmpeg_thread_hw.join();
 	
-	if(ffmpeg_thread_sw.joinable())
-		ffmpeg_thread_sw.join();
+	// if(ffmpeg_thread_sw.joinable())
+	// 	ffmpeg_thread_sw.join();
 		
 	if(opencv_thread.joinable())
 		opencv_thread.join();

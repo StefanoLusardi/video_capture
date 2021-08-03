@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 
 	while(true)
 	{
-		if(!vc.next(&frame.data))
+		if(!vc.read(&frame.data))
 			break;
 
 		cv::imshow(window_title, frame);
