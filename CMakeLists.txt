@@ -29,9 +29,10 @@ endif()
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
 option(VCPP_BUILD_SHARED "Build shared library" ON)
-option(VCPP_BUILD_TESTS "Build library unit tests" ON)
-option(VCPP_BUILD_EXAMPLES "Build library examples" ON)
-option(VCPP_BUILD_SANITIZERS "Build with sanitizers (address, undefined, memory, thread)" ON)
+option(VCPP_BUILD_TESTS "Build library unit tests" OFF)
+option(VCPP_BUILD_EXAMPLES "Build library examples" OFF)
+option(VCPP_BUILD_SANITIZERS "Build with sanitizers (address, undefined, memory, thread)" OFF)
+option(VCPP_BUILD_DOCS "Build documentation using Doxygen" ON)
 
 if (WIN32 AND NOT ${VCPP_BUILD_SHARED})
     message(STATUS "Windows static lib is not supported.") 
@@ -48,4 +49,8 @@ endif()
 
 if(${VCPP_BUILD_EXAMPLES})
 	add_subdirectory(examples)
+endif()
+
+if(${VCPP_BUILD_DOCS})
+	add_subdirectory(docs)
 endif()
