@@ -1,4 +1,4 @@
-find_package(Doxygen REQUIRED)
+find_package(Doxygen)
 
 if (DOXYGEN_FOUND)
     set(PROJECT_LOGO "${CMAKE_CURRENT_SOURCE_DIR}/icon.png")
@@ -21,9 +21,10 @@ if (DOXYGEN_FOUND)
         DEPENDS ${VCPP_DOCS_HEADERS}
         COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
         MAIN_DEPENDENCY ${DOXYFILE_OUT} ${DOXYFILE_IN}
-        COMMENT "Generating documentation using Doxygen")
+        COMMENT "Generating documentation using Doxygen"
+    )
 
     add_custom_target(doxygen ALL DEPENDS ${DOXYGEN_INDEX_FILE})
 else()
-    message("Please install Doxygen to generate documentation.")
+    message(WARNING "Please install Doxygen to generate documentation.")
 endif()

@@ -20,11 +20,11 @@ extern "C"
 namespace vc
 {
 video_capture::video_capture() noexcept
-    : _is_initialized{ false }
+    : _is_opened{ false }
     , _logger{std::make_shared<logger>()} 
     , _hw{std::make_unique<hw_acceleration>(_logger)}
 {
-    reset(); 
+    init(); 
     av_log_set_level(0);
 }
 
@@ -37,6 +37,10 @@ void video_capture::set_log_callback(const log_callback_t& cb, const log_level& 
 
 bool video_capture::open(const std::string& video_path, decode_support decode_preference)
 {
+    std::lock_guard lock(_open_mutex);
+    
+    release();
+
     log_info(_logger, "Opening video path:", video_path);
     log_info(_logger, "HW acceleration", (decode_preference == decode_support::HW ? "required" : "not required"));
 
@@ -124,13 +128,13 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
     _dst_frame->format = AVPixelFormat::AV_PIX_FMT_BGR24;
 	_dst_frame->width  = _codec_ctx->width;
 	_dst_frame->height = _codec_ctx->height;
-    if (auto r = av_frame_get_buffer(_dst_frame, 0); r < 0)
+    if (auto r = av_frame_get_buffer(_dst_frame, 32); r < 0)
     {
         log_error(_logger, "av_frame_get_buffer", _logger->err2str(r));
         return false;
     }
 
-    _is_initialized = true;
+    _is_opened = true;
     log_info(_logger, "Opened video path:", video_path);
     log_info(_logger, "Frame Width:", _codec_ctx->width, "px");
     log_info(_logger, "Frame Height:", _codec_ctx->height, "px");
@@ -142,9 +146,14 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
     return true;
 }
 
+bool video_capture::is_opened() const
+{
+    return _is_opened;
+}
+
 auto video_capture::get_frame_count() const -> std::optional<int>
 {
-    if(!_is_initialized)
+    if(!_is_opened)
     {
         log_error(_logger, "Frame count not available. Video path must be opened first.");
         return std::nullopt;
@@ -165,7 +174,7 @@ auto video_capture::get_frame_count() const -> std::optional<int>
 
 auto video_capture::get_duration() const -> std::optional<std::chrono::steady_clock::duration>
 {
-    if(!_is_initialized)
+    if(!_is_opened)
     {
         log_error(_logger, "Duration not available. Video path must be opened first.");
         return std::nullopt;
@@ -177,7 +186,7 @@ auto video_capture::get_duration() const -> std::optional<std::chrono::steady_cl
 
 auto video_capture::get_frame_size() const -> std::optional<std::tuple<int, int>>
 {
-    if(!_is_initialized)
+    if(!_is_opened)
     {
         log_error(_logger, "Frame size not available. Video path must be opened first.");
         return std::nullopt;
@@ -189,7 +198,7 @@ auto video_capture::get_frame_size() const -> std::optional<std::tuple<int, int>
 
 auto video_capture::get_frame_size_in_bytes() const -> std::optional<int>
 {
-    if(!_is_initialized)
+    if(!_is_opened)
     {
         log_error(_logger, "Frame size in bytes not available. Video path must be opened first.");
         return std::nullopt;
@@ -201,7 +210,7 @@ auto video_capture::get_frame_size_in_bytes() const -> std::optional<int>
 
 auto video_capture::get_fps() const -> std::optional<double>
 {
-    if(!_is_initialized)
+    if(!_is_opened)
     {
         log_error(_logger, "FPS not available. Video path must be opened first.");
         return std::nullopt;
@@ -262,7 +271,7 @@ bool video_capture::grab()
                 continue; 
             
             log_info(_logger, "avcodec_receive_frame", _logger->err2str(r));
-            release();
+            // release();
             return false;
         }
         
@@ -296,28 +305,25 @@ bool video_capture::decode()
 
 bool video_capture::retrieve(uint8_t** data)
 {
-    _sws_ctx = sws_getCachedContext(_sws_ctx,
-        _codec_ctx->width, _codec_ctx->height, (AVPixelFormat)_tmp_frame->format,
-        _codec_ctx->width, _codec_ctx->height, AVPixelFormat::AV_PIX_FMT_BGR24,
-        SWS_BICUBIC, nullptr, nullptr, nullptr);
-    
     if (!_sws_ctx)
     {
-        log_error(_logger, "Unable to initialize SwsContext");
-        return false;
+        _sws_ctx = sws_getCachedContext(_sws_ctx,
+            _codec_ctx->width, _codec_ctx->height, (AVPixelFormat)_tmp_frame->format,
+            _codec_ctx->width, _codec_ctx->height, AVPixelFormat::AV_PIX_FMT_BGR24,
+            SWS_BICUBIC, nullptr, nullptr, nullptr);
+        
+        if (!_sws_ctx)
+        {
+            log_error(_logger, "Unable to initialize SwsContext");
+            return false;
+        }
     }
 
-    _dst_frame->linesize[0] = _codec_ctx->width * 3;
+    // _dst_frame->linesize[0] = _codec_ctx->width * 3;
 
-    int dest_slice_h = sws_scale(_sws_ctx,
-        _tmp_frame->data, _tmp_frame->linesize, 0, _codec_ctx->height,
+    sws_scale(_sws_ctx,
+        _tmp_frame->data, _tmp_frame->linesize,0, _codec_ctx->height,
         _dst_frame->data, _dst_frame->linesize);
-
-    if (dest_slice_h != _codec_ctx->height)
-    {
-        log_error(_logger, "sws_scale() worked out unexpectedly");
-        return false;
-    }
 
     *data = _dst_frame->data[0];
     return true;
@@ -386,7 +392,7 @@ bool video_capture::read_frame(raw_frame* frame)
 
 void video_capture::release()
 {
-    if(!_is_initialized)
+    if(!_is_opened)
         return;
 
     log_info(_logger, "Release video capture");
@@ -415,15 +421,15 @@ void video_capture::release()
     if(_dst_frame)
         av_frame_free(&_dst_frame);
 
-    reset();
+    init();
     _hw->release();
 }
 
-void video_capture::reset()
+void video_capture::init()
 {
     log_info(_logger, "Reset video capture");
 
-    _is_initialized = false;
+    _is_opened = false;
     _decode_support = decode_support::none;
     
     _format_ctx = nullptr;
