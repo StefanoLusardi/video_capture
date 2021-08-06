@@ -303,7 +303,7 @@ bool video_capture::decode()
     return true;
 }
 
-bool video_capture::retrieve(uint8_t** data)
+bool video_capture::retrieve()
 {
     if (!_sws_ctx)
     {
@@ -319,46 +319,10 @@ bool video_capture::retrieve(uint8_t** data)
         }
     }
 
-    // _dst_frame->linesize[0] = _codec_ctx->width * 3;
-
-    sws_scale(_sws_ctx,
-        _tmp_frame->data, _tmp_frame->linesize,0, _codec_ctx->height,
-        _dst_frame->data, _dst_frame->linesize);
-
-    *data = _dst_frame->data[0];
-    return true;
-}
-
-bool video_capture::retrieve_frame(raw_frame* frame)
-{
-    _sws_ctx = sws_getCachedContext(_sws_ctx,
-        _codec_ctx->width, _codec_ctx->height, (AVPixelFormat)_tmp_frame->format,
-        _codec_ctx->width, _codec_ctx->height, AVPixelFormat::AV_PIX_FMT_BGR24,
-        SWS_BICUBIC, nullptr, nullptr, nullptr);
-    
-    if (!_sws_ctx)
-    {
-        log_error(_logger, "Unable to initialize SwsContext");
-        return false;
-    }
-
-    frame->data.resize(_codec_ctx->height * _codec_ctx->width * 3);
-
     _dst_frame->linesize[0] = _codec_ctx->width * 3;
-    _dst_frame->data[0] = frame->data.data();
-    int dest_slice_h = sws_scale(_sws_ctx,
-        _tmp_frame->data, _tmp_frame->linesize, 0, _codec_ctx->height,
-        _dst_frame->data, _dst_frame->linesize);
+    sws_scale(_sws_ctx, _tmp_frame->data, _tmp_frame->linesize,
+        0, _codec_ctx->height, _dst_frame->data, _dst_frame->linesize);
 
-    if (dest_slice_h != _codec_ctx->height)
-    {
-        log_error(_logger, "sws_scale() worked out unexpectedly");
-        return false;
-    }
-
-    const auto time_base = _format_ctx->streams[_stream_index]->time_base;
-    frame->pts = _tmp_frame->best_effort_timestamp * static_cast<double>(time_base.num) / static_cast<double>(time_base.den);
-    
     return true;
 }
 
@@ -370,10 +334,14 @@ bool video_capture::read(uint8_t** data)
     if(!decode())
         return false;
 
-    return retrieve(data);
+    if(!retrieve())
+        return false;
+
+    *data = _dst_frame->data[0];
+    return true;
 }
 
-bool video_capture::read_frame(raw_frame* frame)
+bool video_capture::read(raw_frame* frame)
 {
     if(!grab())
         return false;
@@ -381,13 +349,14 @@ bool video_capture::read_frame(raw_frame* frame)
     if(!decode())
         return false;
 
-    // TODO: merge internal api?
-    // frame->data.resize(_codec_ctx->height * _codec_ctx->width * 3);
-    // auto data = frame->data.data();
-    // auto pts =  &frame->pts;
-    // return retrieve(&data, pts);
+    _dst_frame->data[0] = frame->data.data();
+    if(!retrieve())
+        return false;
 
-    return retrieve_frame(frame);
+    const auto time_base = _format_ctx->streams[_stream_index]->time_base;
+    frame->pts = _tmp_frame->best_effort_timestamp * static_cast<double>(time_base.num) / static_cast<double>(time_base.den);
+    
+    return true;
 }
 
 void video_capture::release()

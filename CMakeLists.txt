@@ -32,14 +32,8 @@ option(VCPP_BUILD_SHARED "Build shared library" ON)
 option(VCPP_BUILD_TESTS "Build library unit tests" OFF)
 option(VCPP_BUILD_EXAMPLES "Build library examples" OFF)
 option(VCPP_BUILD_SANITIZERS "Build with sanitizers (address, undefined, memory, thread)" OFF)
-option(VCPP_BUILD_BENCHMARKS "Build library benchmarks" ON)
-option(VCPP_BUILD_DOCS "Build documentation using Doxygen" ON)
-
-if (WIN32 AND NOT ${VCPP_BUILD_SHARED})
-    message(STATUS "Windows static lib is not supported.") 
-    message(STATUS "FFMPEG downloaded using scripts/install_ffmpeg.bat provides shared libraries only.") 
-    set(VCPP_BUILD_SHARED ON)
-endif()
+option(VCPP_BUILD_BENCHMARKS "Build library benchmarks" OFF)
+option(VCPP_BUILD_DOCS "Build documentation using Doxygen" OFF)
 
 add_subdirectory(video_capture)
 

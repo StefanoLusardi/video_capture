@@ -40,7 +40,7 @@ public:
     bool open(const std::string& video_path, decode_support decode_preference = decode_support::none);
     bool is_opened() const;
     bool read(uint8_t** data);
-    bool read_frame(raw_frame* frame);
+    bool read(raw_frame* frame);
     void release();
     
     auto get_frame_count() const -> std::optional<int>;
@@ -53,8 +53,7 @@ protected:
     void init();
     bool grab();
     bool decode();
-    bool retrieve(uint8_t** data);
-    bool retrieve_frame(raw_frame* frame);
+    bool retrieve();
     bool is_error(const char* func_name, const int error) const;
 
 private:

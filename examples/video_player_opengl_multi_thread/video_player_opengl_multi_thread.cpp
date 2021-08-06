@@ -27,7 +27,7 @@ void decode_thread(vc::video_capture& vc, vc::frame_queue<std::unique_ptr<vc::ra
 	while(true)
 	{
 		auto frame = std::make_unique<vc::raw_frame>();
-		if(!vc.read_frame(frame.get()))
+		if(!vc.read(frame.get()))
 		{
 			std::cout << "Video finished" << std::endl;
 			std::cout << "frames decoded: " << frames_decoded << std::endl;

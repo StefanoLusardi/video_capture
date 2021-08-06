@@ -3,7 +3,7 @@
  * author:		Stefano Lusardi
  * date:		Jun 2021
  * description:	Comparison between OpenCV::VideoCapture and cv::video_capture. 
- * 				API is very similar, yet simplified quite a lot.
+ * 				Public APIs are very similar, while private ones are simplified quite a lot.
  * 				The frames are using OpenCV::imshow in both examples.
  * 				Note that sleep time between consecutive frames is not accurate here, 
  * 				see any video_player_xxx example for a more accurate playback.
@@ -13,11 +13,13 @@
 #include <iostream>
 #include <thread>
 
-#define VIDEO_CAPTURE_LOG_ENABLED 1
-#include <video_capture/video_capture.hpp> // Custom FFMPEG backend
-#include <opencv2/highgui.hpp> // OpenCV GUI
+#include <video_capture/video_capture.hpp>
+#include <video_capture/raw_frame.hpp>
 
-void run_opencv(const char* video_path)
+#include <opencv2/videoio.hpp>
+#include <opencv2/highgui.hpp>
+
+void run_opencv(const char* video_path, const char* name)
 {
 	cv::VideoCapture vc;
 	if(!vc.open(video_path))
@@ -31,19 +33,22 @@ void run_opencv(const char* video_path)
 	const auto fps = vc.get(cv::CAP_PROP_FPS);
 	const auto sleep_time = static_cast<int>(fps);
 	cv::Mat frame(w, h, CV_8UC3);
-	// cv::Mat frame;
 
+	auto start = std::chrono::steady_clock::now();
 	while(vc.read(frame))
 	{
-		cv::imshow("OpenCV", frame);
+		cv::imshow(name, frame);
 		cv::waitKey(sleep_time);
 	}
+	auto end = std::chrono::steady_clock::now();
+
+	std::cout << name << " - " << std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count() << std::endl;
 
 	vc.release();
-	cv::destroyWindow("OpenCV");
+	cv::destroyWindow(name);
 }
 
-void run_ffmpeg(const char* video_path, vc::decode_support decode_support, const char* name)
+void run_ffmpeg(const char* video_path, const char* name, vc::decode_support decode_support)
 {
 	vc::video_capture vc;
 	if(!vc.open(video_path, decode_support))
@@ -57,12 +62,16 @@ void run_ffmpeg(const char* video_path, vc::decode_support decode_support, const
 	const auto fps = vc.get_fps();
 	const auto sleep_time = static_cast<int>(fps.value_or(1));
 	cv::Mat frame(h, w, CV_8UC3);
-	
+
+	auto start = std::chrono::steady_clock::now();
 	while(vc.read(&frame.data))
 	{
 		cv::imshow(name, frame);
 		cv::waitKey(sleep_time);
 	}
+	auto end = std::chrono::steady_clock::now();
+	
+	std::cout << name << " - " << std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count() << std::endl;
 
 	vc.release();
 	cv::destroyWindow(name);
@@ -70,25 +79,20 @@ void run_ffmpeg(const char* video_path, vc::decode_support decode_support, const
 
 int main(int argc, char** argv)
 {
-	auto video_path = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov";
+	// const auto video_path = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov";
+	const auto video_path = "../../../../tests/data/testsrc_10sec_30fps.mkv";
 	
-	// if (argc < 1)
-	// 	return -1;
+	run_opencv(video_path, "OpenCV");
+	run_ffmpeg(video_path, "Lib SW", vc::decode_support::SW);
 
-	// auto video_path = argv[1];
-	
-	// std::thread ffmpeg_thread_hw([video_path]{run_ffmpeg(video_path, vc::decode_support::HW, "HW");});
-	//std::thread ffmpeg_thread_sw([video_path]{run_ffmpeg(video_path, vc::decode_support::SW, "SW");});
-	std::thread opencv_thread([video_path]{run_opencv(video_path);});
-	
-	// if(ffmpeg_thread_hw.joinable())
-	// 	ffmpeg_thread_hw.join();
+	// std::thread opencv_thread([video_path]{run_opencv(video_path, "OpenCV");});
+	// std::thread ffmpeg_thread_sw([video_path]{run_ffmpeg(video_path, "Lib SW", vc::decode_support::SW);});
 	
 	// if(ffmpeg_thread_sw.joinable())
 	// 	ffmpeg_thread_sw.join();
-		
-	if(opencv_thread.joinable())
-		opencv_thread.join();
+	
+	// if(opencv_thread.joinable())
+	// 	opencv_thread.join();
 
 	return 0;
 }

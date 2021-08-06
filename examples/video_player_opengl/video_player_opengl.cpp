@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		frame = std::make_unique<vc::raw_frame>();
-		if (!vc.read_frame(frame.get()))
+		if (!vc.read(frame.get()))
 		{
 			total_end_time = std::chrono::high_resolution_clock::now();
 			std::cout << "Couldn't load video frame" << std::endl;

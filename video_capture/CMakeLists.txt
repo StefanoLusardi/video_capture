@@ -23,6 +23,12 @@ set(VCPP_HEADERS
     include/video_capture/frame_queue.hpp
     include/video_capture/video_capture.hpp)
 
+if (WIN32 AND NOT ${VCPP_BUILD_SHARED})
+    message(STATUS "Windows static lib is not supported.") 
+    message(STATUS "FFMPEG downloaded using scripts/install_ffmpeg.bat provides shared libraries only.") 
+    set(VCPP_BUILD_SHARED ON)
+endif()
+
 if(${VCPP_BUILD_SHARED})
     message(STATUS "Build shared library")
     # Unix relocatable library: it can be searched in executable directory or inside /<EXE_DIR>/../lib

@@ -12,7 +12,7 @@
 #include <benchmark/cppbenchmark.h>
 
 
-const auto video_path = "../../../../tests/data/testsrc_10sec_10fps.mkv";
+const auto video_path = "../../../../tests/data/testsrc_30sec_30fps.mkv";
 
 class VideoCaptureFixture_OpenCV : public CppBenchmark::Benchmark
 {
@@ -122,6 +122,8 @@ protected:
 			context.Cancel();
 			return;
 		}
+
+	    _frame.data.resize(_vc.get_frame_size_in_bytes().value());
 	}
 
     void Cleanup(CppBenchmark::Context& context) override 
@@ -131,32 +133,34 @@ protected:
 
 	void Run(CppBenchmark::Context& context) override
 	{	
-		while(_vc.read_frame(&_frame))
+		while(_vc.read(&_frame))
 		{
 		}
 	}
 };
 
-
-BENCHMARK_CLASS(VideoCaptureFixture_OpenCV,		
-	"VideoCaptureFixture.OpenCV",
-	Settings().Attempts(5).Operations(10000))
+const auto attempts = 1;
+const auto operations = 1;
 
 BENCHMARK_CLASS(VideoCaptureFixture_RawData,
 	"VideoCaptureFixture.RawData.SW",
-	Settings().Attempts(5).Operations(10000).Param(static_cast<int>(vc::decode_support::SW)))
+	Settings().Attempts(attempts).Operations(operations).Param(static_cast<int>(vc::decode_support::SW)))
 
 BENCHMARK_CLASS(VideoCaptureFixture_RawFrame,
 	"VideoCaptureFixture.RawFrame.SW", 
-	Settings().Attempts(5).Operations(10000).Param(static_cast<int>(vc::decode_support::SW)))
+	Settings().Attempts(attempts).Operations(operations).Param(static_cast<int>(vc::decode_support::SW)))
 
-BENCHMARK_CLASS(VideoCaptureFixture_RawData,
-	"VideoCaptureFixture.RawData.HW",
-	Settings().Attempts(5).Operations(10000).Param(static_cast<int>(vc::decode_support::HW)))
+BENCHMARK_CLASS(VideoCaptureFixture_OpenCV,		
+	"VideoCaptureFixture.OpenCV",
+	Settings().Attempts(attempts).Operations(operations))
 
-BENCHMARK_CLASS(VideoCaptureFixture_RawFrame,
-	"VideoCaptureFixture.RawFrame.HW", 
-	Settings().Attempts(5).Operations(10000).Param(static_cast<int>(vc::decode_support::HW)))
+// BENCHMARK_CLASS(VideoCaptureFixture_RawData,
+// 	"VideoCaptureFixture.RawData.HW",
+// 	Settings().Attempts(attempts).Operations(operations).Param(static_cast<int>(vc::decode_support::HW)))
+
+// BENCHMARK_CLASS(VideoCaptureFixture_RawFrame,
+// 	"VideoCaptureFixture.RawFrame.HW", 
+// 	Settings().Attempts(attempts).Operations(operations).Param(static_cast<int>(vc::decode_support::HW)))
 
 BENCHMARK_MAIN()
 
