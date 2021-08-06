@@ -12,12 +12,11 @@
 #include <iostream>
 #include <thread>
 
-// #define VIDEO_CAPTURE_LOG_ENABLED 1
-#include <video_capture/video_capture.hpp> 
-#include <opencv2/highgui.hpp> // OpenCV GUI
+#include <video_capture/video_capture.hpp>
+#include <opencv2/highgui.hpp>
 
-void log_info(const std::string& str)  { std::cout << "[  INFO ] " << str << std::endl; }
-void log_error(const std::string& str) { std::cout << "[ ERROR ] " << str << std::endl; }
+void cb_log_info(const std::string& str)  { std::cout << "[  INFO ] " << str << std::endl; }
+void cb_log_error(const std::string& str) { std::cout << "[ ERROR ] " << str << std::endl; }
 
 int main(int argc, char** argv)
 {
@@ -37,8 +36,8 @@ int main(int argc, char** argv)
 	}
 
 	vc::video_capture vc;
-	vc.set_log_callback(log_info, vc::log_level::info);
-	vc.set_log_callback(log_error, vc::log_level::error);
+	vc.set_log_callback(cb_log_info, vc::log_level::info);
+	vc.set_log_callback(cb_log_error, vc::log_level::error);
 
 	if(!vc.open(video_path, vc::decode_support::HW))
 	{

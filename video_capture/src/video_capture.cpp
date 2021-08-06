@@ -19,10 +19,11 @@ extern "C"
 
 namespace vc
 {
+std::map<log_level, logger::log_callback_t> logger::log_callbacks = {};
+
 video_capture::video_capture() noexcept
     : _is_opened{ false }
-    , _logger{std::make_shared<logger>()} 
-    , _hw{std::make_unique<hw_acceleration>(_logger)}
+    , _hw{std::make_unique<hw_acceleration>()}
 {
     init(); 
     av_log_set_level(0);
@@ -33,7 +34,7 @@ video_capture::~video_capture() noexcept
     release();
 }
 
-void video_capture::set_log_callback(const log_callback_t& cb, const log_level& level) { _logger->set_log_callback(cb, level); }
+void video_capture::set_log_callback(const log_callback_t& cb, const log_level& level) { vc::logger::set_log_callback(cb, level); }
 
 bool video_capture::open(const std::string& video_path, decode_support decode_preference)
 {
@@ -41,8 +42,8 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
     
     release();
 
-    log_info(_logger, "Opening video path:", video_path);
-    log_info(_logger, "HW acceleration", (decode_preference == decode_support::HW ? "required" : "not required"));
+    log_info("Opening video path:", video_path);
+    log_info("HW acceleration", (decode_preference == decode_support::HW ? "required" : "not required"));
 
     if(decode_preference == decode_support::HW)
         _decode_support = _hw->init();
@@ -51,44 +52,44 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
 
     if (_format_ctx = avformat_alloc_context(); !_format_ctx)
     {
-        log_error(_logger, "avformat_alloc_context");
+        log_error("avformat_alloc_context");
         return false;
     }
 
     if (auto r = av_dict_set(&_options, "rtsp_transport", "tcp", 0); r < 0)
     {
-        log_error(_logger, "av_dict_set", _logger->err2str(r));
+        log_error("av_dict_set", vc::logger::err2str(r));
         return false;
     }
 
     if (auto r = avformat_open_input(&_format_ctx, video_path.c_str(), nullptr, &_options); r < 0)
     {
-        log_error(_logger, "avformat_open_input", _logger->err2str(r));
+        log_error("avformat_open_input", vc::logger::err2str(r));
         return false;
     }
 
     if (auto r = avformat_find_stream_info(_format_ctx, nullptr); r < 0)
     {
-        log_error(_logger, "avformat_find_stream_info");
+        log_error("avformat_find_stream_info");
         return false;
     }
 
     AVCodec* codec = nullptr;
     if (_stream_index = av_find_best_stream(_format_ctx, AVMediaType::AVMEDIA_TYPE_VIDEO, -1, -1, &codec, 0); _stream_index < 0)
     {
-        log_error(_logger, "av_find_best_stream", _logger->err2str(_stream_index));
+        log_error("av_find_best_stream", vc::logger::err2str(_stream_index));
         return false;
     }
 
     if (_codec_ctx = avcodec_alloc_context3(codec); !_codec_ctx)
     {
-        log_error(_logger, "avcodec_alloc_context3");
+        log_error("avcodec_alloc_context3");
         return false;
     }
 
     if (auto r = avcodec_parameters_to_context(_codec_ctx, _format_ctx->streams[_stream_index]->codecpar); r < 0)
     {
-        log_error(_logger, "avcodec_parameters_to_context", _logger->err2str(r));
+        log_error("avcodec_parameters_to_context", vc::logger::err2str(r));
         return false;
     }
 
@@ -101,25 +102,25 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
 
     if (auto r = avcodec_open2(_codec_ctx, codec, nullptr); r < 0)
     {
-        log_error(_logger, "avcodec_open2", _logger->err2str(r));
+        log_error("avcodec_open2", vc::logger::err2str(r));
         return false;
     }
 
     if (_packet = av_packet_alloc(); !_packet)
     {
-        log_error(_logger, "av_packet_alloc");
+        log_error("av_packet_alloc");
         return false;
     }
     
     if (_src_frame = av_frame_alloc(); !_src_frame)
     {
-        log_error(_logger, "av_frame_alloc");
+        log_error("av_frame_alloc");
         return false;
     }
 
     if (_dst_frame = av_frame_alloc(); !_dst_frame)
     {
-        log_error(_logger, "av_frame_alloc");
+        log_error("av_frame_alloc");
         return false;
     }
 
@@ -130,18 +131,18 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
 	_dst_frame->height = _codec_ctx->height;
     if (auto r = av_frame_get_buffer(_dst_frame, 32); r < 0)
     {
-        log_error(_logger, "av_frame_get_buffer", _logger->err2str(r));
+        log_error("av_frame_get_buffer", vc::logger::err2str(r));
         return false;
     }
 
     _is_opened = true;
-    log_info(_logger, "Opened video path:", video_path);
-    log_info(_logger, "Frame Width:", _codec_ctx->width, "px");
-    log_info(_logger, "Frame Height:", _codec_ctx->height, "px");
-    log_info(_logger, "Frame Rate:", (get_fps() != std::nullopt ? get_fps().value() : -1), "fps");
-    log_info(_logger, "Duration:", (get_duration() != std::nullopt ? std::chrono::duration_cast<std::chrono::seconds>(get_duration().value()).count() : -1), "sec");
-    log_info(_logger, "Number of frames:", (get_frame_count() != std::nullopt ? get_frame_count().value() : -1));
-    log_info(_logger, "Video Capture is initialized");
+    log_info("Opened video path:", video_path);
+    log_info("Frame Width:", _codec_ctx->width, "px");
+    log_info("Frame Height:", _codec_ctx->height, "px");
+    log_info("Frame Rate:", (get_fps() != std::nullopt ? get_fps().value() : -1), "fps");
+    log_info("Duration:", (get_duration() != std::nullopt ? std::chrono::duration_cast<std::chrono::seconds>(get_duration().value()).count() : -1), "sec");
+    log_info("Number of frames:", (get_frame_count() != std::nullopt ? get_frame_count().value() : -1));
+    log_info("Video Capture is initialized");
 
     return true;
 }
@@ -155,7 +156,7 @@ auto video_capture::get_frame_count() const -> std::optional<int>
 {
     if(!_is_opened)
     {
-        log_error(_logger, "Frame count not available. Video path must be opened first.");
+        log_error("Frame count not available. Video path must be opened first.");
         return std::nullopt;
     }
 
@@ -176,7 +177,7 @@ auto video_capture::get_duration() const -> std::optional<std::chrono::steady_cl
 {
     if(!_is_opened)
     {
-        log_error(_logger, "Duration not available. Video path must be opened first.");
+        log_error("Duration not available. Video path must be opened first.");
         return std::nullopt;
     }
 
@@ -188,7 +189,7 @@ auto video_capture::get_frame_size() const -> std::optional<std::tuple<int, int>
 {
     if(!_is_opened)
     {
-        log_error(_logger, "Frame size not available. Video path must be opened first.");
+        log_error("Frame size not available. Video path must be opened first.");
         return std::nullopt;
     }
     
@@ -200,7 +201,7 @@ auto video_capture::get_frame_size_in_bytes() const -> std::optional<int>
 {
     if(!_is_opened)
     {
-        log_error(_logger, "Frame size in bytes not available. Video path must be opened first.");
+        log_error("Frame size in bytes not available. Video path must be opened first.");
         return std::nullopt;
     }
 
@@ -212,14 +213,14 @@ auto video_capture::get_fps() const -> std::optional<double>
 {
     if(!_is_opened)
     {
-        log_error(_logger, "FPS not available. Video path must be opened first.");
+        log_error("FPS not available. Video path must be opened first.");
         return std::nullopt;
     }
     
     auto frame_rate = _format_ctx->streams[_stream_index]->avg_frame_rate;
     if(frame_rate.num <= 0 || frame_rate.den <= 0 )
     {
-        log_info(_logger, "Unable to retrieve FPS.");
+        log_info("Unable to retrieve FPS.");
         return std::nullopt;
     }
 
@@ -231,11 +232,11 @@ bool video_capture::is_error(const char* func_name, const int error) const
 {
     if(AVERROR_EOF == error) 
     {
-        log_info(_logger, func_name, _logger->err2str(error));
+        log_info(func_name, vc::logger::err2str(error));
         return false;
     }
     
-    log_error(_logger, func_name, _logger->err2str(error));  
+    log_error(func_name, vc::logger::err2str(error));  
     return true;    
 }
 
@@ -270,7 +271,7 @@ bool video_capture::grab()
             if (AVERROR(EAGAIN) == r)                         
                 continue; 
             
-            log_info(_logger, "avcodec_receive_frame", _logger->err2str(r));
+            log_info("avcodec_receive_frame", vc::logger::err2str(r));
             // release();
             return false;
         }
@@ -285,13 +286,13 @@ bool video_capture::decode()
     {
         if (auto r = av_hwframe_transfer_data(_tmp_frame, _src_frame, 0); r < 0)
         {
-            log_error(_logger, "av_hwframe_transfer_data", _logger->err2str(r));
+            log_error("av_hwframe_transfer_data", vc::logger::err2str(r));
             return false;
         }
 
         if (auto r = av_frame_copy_props(_tmp_frame, _src_frame); r < 0)
         {
-            log_error(_logger, "av_frame_copy_props", _logger->err2str(r));
+            log_error("av_frame_copy_props", vc::logger::err2str(r));
             return false;
         }
     }
@@ -314,7 +315,7 @@ bool video_capture::retrieve()
         
         if (!_sws_ctx)
         {
-            log_error(_logger, "Unable to initialize SwsContext");
+            log_error("Unable to initialize SwsContext");
             return false;
         }
     }
@@ -364,7 +365,7 @@ void video_capture::release()
     if(!_is_opened)
         return;
 
-    log_info(_logger, "Release video capture");
+    log_info("Release video capture");
 
     if(_sws_ctx)
         sws_freeContext(_sws_ctx);
@@ -396,7 +397,7 @@ void video_capture::release()
 
 void video_capture::init()
 {
-    log_info(_logger, "Reset video capture");
+    log_info("Reset video capture");
 
     _is_opened = false;
     _decode_support = decode_support::none;

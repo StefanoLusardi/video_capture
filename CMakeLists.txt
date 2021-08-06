@@ -30,10 +30,11 @@ include(${CMAKE_BINARY_DIR}/conan.cmake)
 
 option(VCPP_BUILD_SHARED "Build shared library" ON)
 option(VCPP_BUILD_TESTS "Build library unit tests" OFF)
-option(VCPP_BUILD_EXAMPLES "Build library examples" OFF)
+option(VCPP_BUILD_EXAMPLES "Build library examples" ON)
 option(VCPP_BUILD_SANITIZERS "Build with sanitizers (address, undefined, memory, thread)" OFF)
 option(VCPP_BUILD_BENCHMARKS "Build library benchmarks" OFF)
 option(VCPP_BUILD_DOCS "Build documentation using Doxygen" OFF)
+option(VCPP_INTERNAL_LOGGER "Enable library internal logging" OFF)
 
 add_subdirectory(video_capture)
 

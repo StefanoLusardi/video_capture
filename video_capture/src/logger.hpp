@@ -1,31 +1,31 @@
 #pragma once
 
-extern "C"
-{
-#include <libavutil/error.h>
-}
-
 #include <sstream>
 #include <utility>
 #include <functional>
 #include <cstring>
 #include <map>
 
+extern "C"
+{
+#include <libavutil/error.h>
+}
+
 #if defined(VIDEO_CAPTURE_LOG_ENABLED)
-    #define log_info(logger, ...) logger->log(log_level::info, __FILE__, __LINE__, ##__VA_ARGS__)
-    #define log_error(logger, ...) logger->log(log_level::error, __FILE__, __LINE__, ##__VA_ARGS__)
+    #define log_info(...) vc::logger::log(log_level::info, ##__VA_ARGS__)
+    #define log_error(...) vc::logger::log(log_level::error, ##__VA_ARGS__)
 #else
-    #define log_info(logger, ...) (void)0
-    #define log_error(logger, ...) (void)0
+    #define log_info(...) (void)0
+    #define log_error(...) (void)0
 #endif
 
 namespace vc
 {
-class video_capture::logger
+class logger
 {
 public:
     template<typename... Args>
-    void log(const log_level& level, Args&& ...args)
+    static void log(const log_level& level, Args&& ...args)
     {
         if(auto cb = log_callbacks.find(level); cb != log_callbacks.end())
         {
@@ -36,7 +36,7 @@ public:
     }
 
     using log_callback_t = std::function<void(const std::string&)>;
-    void set_log_callback(const log_callback_t& cb, const log_level& level)
+    static void set_log_callback(const log_callback_t& cb, const log_level& level)
     {
         if(level == log_level::all)
         {
@@ -48,7 +48,7 @@ public:
         log_callbacks[level] = cb;
     }
 
-    const char* err2str(int errnum) const
+    static const char* err2str(int errnum)
     {
         static char str[AV_ERROR_MAX_STRING_SIZE];
         std::memset(str, 0, sizeof(str));
@@ -56,7 +56,7 @@ public:
     }
 
 private:
-    std::map<log_level, log_callback_t> log_callbacks;
+    static std::map<log_level, log_callback_t> log_callbacks;
 };
 
 }

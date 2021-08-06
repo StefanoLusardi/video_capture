@@ -18,8 +18,6 @@ struct AVDictionary;
 struct SwsContext;
 struct AVBufferRef;
 
-#define VIDEO_CAPTURE_LOG_ENABLED 0
-
 namespace vc
 {
 struct raw_frame;
@@ -28,15 +26,13 @@ enum class log_level { all, info, error };
 
 class API_VIDEO_CAPTURE video_capture
 {
-    class hw_acceleration;
-    class logger;
-
 public:
     explicit video_capture() noexcept;
     ~video_capture() noexcept;
     
     using log_callback_t = std::function<void(const std::string&)>;
     void set_log_callback(const log_callback_t& cb, const log_level& level = log_level::all);    
+
     bool open(const std::string& video_path, decode_support decode_preference = decode_support::none);
     bool is_opened() const;
     bool read(uint8_t** data);
@@ -74,7 +70,7 @@ private:
     int _stream_index;
     double _timestamp_unit;
 
-    std::shared_ptr<logger> _logger;
+    class hw_acceleration;
     std::unique_ptr<hw_acceleration> _hw;
 };
 

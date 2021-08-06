@@ -12,8 +12,7 @@ namespace vc
 class video_capture::hw_acceleration
 {
 public:
-    explicit hw_acceleration(const std::shared_ptr<logger>& logger)
-    : _logger{ logger }
+    explicit hw_acceleration()
     {
         reset();
     }
@@ -30,10 +29,10 @@ public:
             AVHWDeviceType hw_type = AV_HWDEVICE_TYPE_NONE;
 
             std::vector<AVHWDeviceType> supported_hw_types;
-            _logger->log(log_level::info, "Available devices for HW Acceleration: ");
+            log_info("Available devices for HW Acceleration: ");
             while ((hw_type = av_hwdevice_iterate_types(hw_type)) != AV_HWDEVICE_TYPE_NONE)
             {
-                log_info(_logger, av_hwdevice_get_type_name(hw_type));
+                log_info(av_hwdevice_get_type_name(hw_type));
                 supported_hw_types.push_back(hw_type);
             }
 
@@ -50,7 +49,7 @@ public:
         const auto hw_type = av_hwdevice_find_type_by_name(device_type_str);
         if (hw_type == AV_HWDEVICE_TYPE_NONE)
         {
-            log_info(_logger, "HW decoder not available. Fall back to SW decoding");
+            log_info("HW decoder not available. Fall back to SW decoding");
             return decode_support::SW;
         }
 
@@ -70,8 +69,8 @@ public:
         hw_pixel_format = get_hw_pixel_format(hw_type);
         if (auto r = av_hwdevice_ctx_create(&hw_device_ctx, hw_type, nullptr, nullptr, 0); r < 0)
         {
-            log_error(_logger, "av_hwdevice_ctx_create", _logger->err2str(r));
-            log_info(_logger, "HW decoder not available. Fall back to SW decoding");
+            log_error("av_hwdevice_ctx_create", vc::logger::err2str(r));
+            log_info("HW decoder not available. Fall back to SW decoding");
             return decode_support::SW;
         }
 
@@ -83,7 +82,7 @@ public:
 
         // av_hwdevice_ctx_create_derived
 
-        log_info(_logger, "HW decoding enabled using", "xxx");
+        log_info("HW decoding enabled using", "xxx");
         return decode_support::HW;
     }
 
@@ -98,7 +97,7 @@ public:
         frames_ctx->initial_pool_size = 32;
         if(av_hwframe_ctx_init(hw_frames_ctx) < 0)
         {
-            log_error(_logger, "Error initilizing HW frame context");
+            log_error("Error initilizing HW frame context");
         }
 
         return hw_frames_ctx;
@@ -125,9 +124,6 @@ public:
     AVBufferRef* hw_device_ctx;
     AVBufferRef* hw_frames_ctx;
     int hw_pixel_format;
-
-protected:
-    std::shared_ptr<logger> _logger;
 };
 
 }

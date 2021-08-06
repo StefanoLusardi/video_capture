@@ -44,6 +44,10 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE LIB_VIDEO_CAPTURE)
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${video_capture_VERSION} SOVERSION ${video_capture_VERSION_MAJOR})
 
+if(${VCPP_INTERNAL_LOGGER})
+    target_compile_definitions(${PROJECT_NAME} PRIVATE VIDEO_CAPTURE_LOG_ENABLED)
+endif()
+
 # Windows
 if(WIN32)
     # FFMPEG must be installed at the environment variable %FFMPEG_DIR%

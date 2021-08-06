@@ -18,10 +18,10 @@ conan_cmake_install(
     SETTINGS ${conan_settings}
     OUTPUT_QUIET
 )
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR}/tests)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR}/tests)
 
-find_package(GTest COMPONENTS gtest REQUIRED QUIET)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR}/tests)
+
+find_package(GTest COMPONENTS GTest REQUIRED)
 
 set(VCPP_TEST_SOURCES 
     src/video_capture_test.cpp
@@ -41,10 +41,11 @@ add_executable(${TARGET_NAME}
 
 target_link_libraries(${TARGET_NAME} 
 	PRIVATE video_capture 
-	PRIVATE GTest::gtest
+	PRIVATE GTest::GTest
 )
 
 target_include_directories(${TARGET_NAME} PRIVATE include)
 
 include(GoogleTest)
-gtest_discover_tests(${TARGET_NAME})
+gtest_add_tests(TARGET ${TARGET_NAME})
+# gtest_discover_tests(${TARGET_NAME})
