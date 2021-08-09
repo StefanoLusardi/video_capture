@@ -24,7 +24,7 @@ if (DOXYGEN_FOUND)
         COMMENT "Generating documentation using Doxygen"
     )
 
-    add_custom_target(doxygen ALL DEPENDS ${DOXYGEN_INDEX_FILE})
+    add_custom_target(video_capture_docs ALL DEPENDS ${DOXYGEN_INDEX_FILE})
 else()
     message(WARNING "Please install Doxygen to generate documentation.")
 endif()
