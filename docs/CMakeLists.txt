@@ -2,6 +2,8 @@ find_package(Doxygen)
 
 if (DOXYGEN_FOUND)
     set(PROJECT_LOGO "${CMAKE_CURRENT_SOURCE_DIR}/icon.png")
+    set(PROJECT_MAIN_PAGE README.md)
+
     set(VCPP_HEADERS_PATH "${CMAKE_SOURCE_DIR}/video_capture/include/video_capture")
     set(VCPP_DOCS_HEADERS 
         ${VCPP_HEADERS_PATH}/frame_queue.hpp
@@ -9,7 +11,13 @@ if (DOXYGEN_FOUND)
         ${VCPP_HEADERS_PATH}/video_capture.hpp
     )
 
-    set(DOXYGEN_INPUT_DIR ${PROJECT_SOURCE_DIR}/video_capture/include/video_capture)
+    list(APPEND DOXYGEN_INPUT_FILES 
+        "${CMAKE_SOURCE_DIR}/README.md"
+        "${VCPP_DOCS_HEADERS}"
+    )
+    string(REPLACE ";"  " " DOXYGEN_INPUT_FILES "${DOXYGEN_INPUT_FILES}")
+
+    set(DOXYGEN_INPUTS ${DOXYGEN_INPUT_FILES})
     set(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/)
     set(DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/html/index.html)
     set(DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)

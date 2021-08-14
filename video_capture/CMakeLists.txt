@@ -44,7 +44,8 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE LIB_VIDEO_CAPTURE)
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${video_capture_VERSION} SOVERSION ${video_capture_VERSION_MAJOR})
 
-if(${VCPP_INTERNAL_LOGGER})
+if(${VCPP_INTERNAL_LOGGER} OR ${VCPP_BUILD_TESTS})
+    message(STATUS "Build ${PROJECT_NAME} library with internal logger enabled")
     target_compile_definitions(${PROJECT_NAME} PRIVATE VIDEO_CAPTURE_LOG_ENABLED)
 endif()
 

@@ -3,15 +3,18 @@
 namespace vc::test
 {
 
-// Test Error callback using a free function
-std::string error_msg = std::string();
-void error_cb(const std::string& s)
+namespace
 {
-    error_msg = s;
+    std::string error_msg = std::string();
+    void error_cb(const std::string& s)
+    {
+        error_msg = s;
+    }
 }
 
 TEST_F(video_capture_test, error_callback)
 { 
+    // Test Error callback using a free function
     vc->set_log_callback(&error_cb, vc::log_level::error);
     const auto fc = vc->get_frame_count();
     ASSERT_EQ(error_msg, "Video path must be opened first.");
@@ -26,26 +29,22 @@ TEST_F(video_capture_test, info_callback)
     };
 
     vc->set_log_callback(info_cb, vc::log_level::info);
-    vc->open("rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov");
+    vc->open(test_data_directory + "testsrc_10sec_4fps.mkv");
     ASSERT_EQ(info_msg, "Video Capture is initialized");
 }
 
-/*
-TEST_F(video_capture_test, all_callback){ }
 
-TEST_F(video_capture_test, open_default_decode){ }
-TEST_F(video_capture_test, open_sw_decode){ }
-TEST_F(video_capture_test, open_hw_decode){ }
+// T EST_F(video_capture_test, all_callback){ }
+// T EST_F(video_capture_test, open_default_decode){ }
+// T EST_F(video_capture_test, open_sw_decode){ }
+// T EST_F(video_capture_test, open_hw_decode){ }
+// T EST_F(video_capture_test, get_frame_count){ }
+// T EST_F(video_capture_test, get_duration){ }
+// T EST_F(video_capture_test, get_frame_size){ }
+// T EST_F(video_capture_test, get_frame_size_in_bytes){ }
+// T EST_F(video_capture_test, get_fps){ }
+// T EST_F(video_capture_test, next){ }
+// T EST_F(video_capture_test, next_frame){ }
+// T EST_F(video_capture_test, release){ }
 
-TEST_F(video_capture_test, get_frame_count){ }
-TEST_F(video_capture_test, get_duration){ }
-TEST_F(video_capture_test, get_frame_size){ }
-TEST_F(video_capture_test, get_frame_size_in_bytes){ }
-TEST_F(video_capture_test, get_fps){ }
-
-TEST_F(video_capture_test, next){ }
-TEST_F(video_capture_test, next_frame){ }
-
-TEST_F(video_capture_test, release){ }
-*/
 }
