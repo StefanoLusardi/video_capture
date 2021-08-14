@@ -19,8 +19,6 @@ extern "C"
 
 namespace vc
 {
-std::map<log_level, logger::log_callback_t> logger::log_callbacks = {};
-
 video_capture::video_capture() noexcept
     : _is_opened{ false }
     , _hw{std::make_unique<hw_acceleration>()}
@@ -34,7 +32,7 @@ video_capture::~video_capture() noexcept
     release();
 }
 
-void video_capture::set_log_callback(const log_callback_t& cb, const log_level& level) { vc::logger::set_log_callback(cb, level); }
+void video_capture::set_log_callback(const log_callback_t& cb, const log_level& level) { vc::logger::get().set_log_callback(cb, level); }
 
 bool video_capture::open(const std::string& video_path, decode_support decode_preference)
 {
@@ -58,13 +56,13 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
 
     if (auto r = av_dict_set(&_options, "rtsp_transport", "tcp", 0); r < 0)
     {
-        log_error("av_dict_set", vc::logger::err2str(r));
+        log_error("av_dict_set", vc::logger::get().err2str(r));
         return false;
     }
 
     if (auto r = avformat_open_input(&_format_ctx, video_path.c_str(), nullptr, &_options); r < 0)
     {
-        log_error("avformat_open_input", vc::logger::err2str(r));
+        log_error("avformat_open_input", vc::logger::get().err2str(r));
         return false;
     }
 
@@ -77,7 +75,7 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
     AVCodec* codec = nullptr;
     if (_stream_index = av_find_best_stream(_format_ctx, AVMediaType::AVMEDIA_TYPE_VIDEO, -1, -1, &codec, 0); _stream_index < 0)
     {
-        log_error("av_find_best_stream", vc::logger::err2str(_stream_index));
+        log_error("av_find_best_stream", vc::logger::get().err2str(_stream_index));
         return false;
     }
 
@@ -89,7 +87,7 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
 
     if (auto r = avcodec_parameters_to_context(_codec_ctx, _format_ctx->streams[_stream_index]->codecpar); r < 0)
     {
-        log_error("avcodec_parameters_to_context", vc::logger::err2str(r));
+        log_error("avcodec_parameters_to_context", vc::logger::get().err2str(r));
         return false;
     }
 
@@ -102,7 +100,7 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
 
     if (auto r = avcodec_open2(_codec_ctx, codec, nullptr); r < 0)
     {
-        log_error("avcodec_open2", vc::logger::err2str(r));
+        log_error("avcodec_open2", vc::logger::get().err2str(r));
         return false;
     }
 
@@ -124,14 +122,27 @@ bool video_capture::open(const std::string& video_path, decode_support decode_pr
         return false;
     }
 
-    _tmp_frame = _src_frame;
+    if(_decode_support == decode_support::HW)
+    {
+        // HW: Allocate one extra frame for HW decoding.
+        if (_tmp_frame = av_frame_alloc(); !_tmp_frame)
+        {
+            log_error("av_frame_alloc");
+            return false;
+        }
+    }
+    else
+    {
+        // SW: No need to allocate any temporary frame, just make it point to _src_frame.
+        _tmp_frame = _src_frame;
+    }
 
     _dst_frame->format = AVPixelFormat::AV_PIX_FMT_BGR24;
 	_dst_frame->width  = _codec_ctx->width;
 	_dst_frame->height = _codec_ctx->height;
-    if (auto r = av_frame_get_buffer(_dst_frame, 32); r < 0)
+    if (auto r = av_frame_get_buffer(_dst_frame, 0); r < 0)
     {
-        log_error("av_frame_get_buffer", vc::logger::err2str(r));
+        log_error("av_frame_get_buffer", vc::logger::get().err2str(r));
         return false;
     }
 
@@ -232,11 +243,11 @@ bool video_capture::is_error(const char* func_name, const int error) const
 {
     if(AVERROR_EOF == error) 
     {
-        log_info(func_name, vc::logger::err2str(error));
+        log_info(func_name, vc::logger::get().err2str(error));
         return false;
     }
     
-    log_error(func_name, vc::logger::err2str(error));  
+    log_error(func_name, vc::logger::get().err2str(error));  
     return true;    
 }
 
@@ -271,7 +282,7 @@ bool video_capture::grab()
             if (AVERROR(EAGAIN) == r)                         
                 continue; 
             
-            log_info("avcodec_receive_frame", vc::logger::err2str(r));
+            log_info("avcodec_receive_frame", vc::logger::get().err2str(r));
             // release();
             return false;
         }
@@ -286,13 +297,13 @@ bool video_capture::decode()
     {
         if (auto r = av_hwframe_transfer_data(_tmp_frame, _src_frame, 0); r < 0)
         {
-            log_error("av_hwframe_transfer_data", vc::logger::err2str(r));
+            log_error("av_hwframe_transfer_data", vc::logger::get().err2str(r));
             return false;
         }
 
         if (auto r = av_frame_copy_props(_tmp_frame, _src_frame); r < 0)
         {
-            log_error("av_frame_copy_props", vc::logger::err2str(r));
+            log_error("av_frame_copy_props", vc::logger::get().err2str(r));
             return false;
         }
     }
@@ -390,6 +401,9 @@ void video_capture::release()
 
     if(_dst_frame)
         av_frame_free(&_dst_frame);
+
+    if(_decode_support == decode_support::HW && _tmp_frame)
+        av_frame_free(&_tmp_frame);
 
     init();
     _hw->release();

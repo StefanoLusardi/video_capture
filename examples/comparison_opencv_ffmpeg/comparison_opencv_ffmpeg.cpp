@@ -34,6 +34,8 @@ void run_opencv(const char* video_path, const char* name)
 	const auto sleep_time = static_cast<int>(fps);
 	cv::Mat frame(w, h, CV_8UC3);
 
+	cv::namedWindow(name);
+
 	auto start = std::chrono::steady_clock::now();
 	while(vc.read(frame))
 	{
@@ -63,6 +65,8 @@ void run_ffmpeg(const char* video_path, const char* name, vc::decode_support dec
 	const auto sleep_time = static_cast<int>(fps.value_or(1));
 	cv::Mat frame(h, w, CV_8UC3);
 
+	cv::namedWindow(name);
+
 	auto start = std::chrono::steady_clock::now();
 	while(vc.read(&frame.data))
 	{
@@ -80,7 +84,7 @@ void run_ffmpeg(const char* video_path, const char* name, vc::decode_support dec
 int main(int argc, char** argv)
 {
 	// const auto video_path = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov";
-	const auto video_path = "../../../../tests/data/testsrc_10sec_30fps.mkv";
+	const auto video_path = "../../../../tests/data/v.mp4";
 	
 	run_opencv(video_path, "OpenCV");
 	run_ffmpeg(video_path, "Lib SW", vc::decode_support::SW);

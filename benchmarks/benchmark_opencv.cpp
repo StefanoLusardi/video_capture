@@ -12,7 +12,8 @@
 #include <benchmark/cppbenchmark.h>
 
 
-const auto video_path = "../../../../tests/data/testsrc_30sec_30fps.mkv";
+const auto video_path = "../../../../tests/data/v.mp4";
+// const auto video_path = "../../../../tests/data/testsrc_30sec_30fps.mkv";
 
 class VideoCaptureFixture_OpenCV : public CppBenchmark::Benchmark
 {
@@ -150,17 +151,17 @@ BENCHMARK_CLASS(VideoCaptureFixture_RawFrame,
 	"VideoCaptureFixture.RawFrame.SW", 
 	Settings().Attempts(attempts).Operations(operations).Param(static_cast<int>(vc::decode_support::SW)))
 
-BENCHMARK_CLASS(VideoCaptureFixture_OpenCV,		
-	"VideoCaptureFixture.OpenCV",
-	Settings().Attempts(attempts).Operations(operations))
+// BENCHMARK_CLASS(VideoCaptureFixture_OpenCV,		
+// 	"VideoCaptureFixture.OpenCV",
+// 	Settings().Attempts(attempts).Operations(operations))
 
-// BENCHMARK_CLASS(VideoCaptureFixture_RawData,
-// 	"VideoCaptureFixture.RawData.HW",
-// 	Settings().Attempts(attempts).Operations(operations).Param(static_cast<int>(vc::decode_support::HW)))
+BENCHMARK_CLASS(VideoCaptureFixture_RawData,
+	"VideoCaptureFixture.RawData.HW",
+	Settings().Attempts(attempts).Operations(operations).Param(static_cast<int>(vc::decode_support::HW)))
 
-// BENCHMARK_CLASS(VideoCaptureFixture_RawFrame,
-// 	"VideoCaptureFixture.RawFrame.HW", 
-// 	Settings().Attempts(attempts).Operations(operations).Param(static_cast<int>(vc::decode_support::HW)))
+BENCHMARK_CLASS(VideoCaptureFixture_RawFrame,
+	"VideoCaptureFixture.RawFrame.HW", 
+	Settings().Attempts(attempts).Operations(operations).Param(static_cast<int>(vc::decode_support::HW)))
 
 BENCHMARK_MAIN()
 

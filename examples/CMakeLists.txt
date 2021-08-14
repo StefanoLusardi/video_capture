@@ -9,6 +9,12 @@ message("")
 add_subdirectory(comparison_opencv_ffmpeg)
 
 message("")
+message(":::::::::::::::::::::::::::::::::::::::::::")
+message("::VideoCapture:: Examples - hw_accel")
+message("")
+add_subdirectory(hw_accel)
+
+message("")
 message(":::::::::::::::::::::::::::::::::::::::::::::::")
 message("::VideoCapture:: Examples - video_capture_simple_decode")
 message("")
