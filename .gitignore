@@ -1,7 +1,5 @@
-build*/
-out*/
-
-*.vs/
-*.vscode/
-
-*__pycache__/
+**/*build*
+**/.vs
+**/.vscode
+**/.cache
+**/compile_commands.json
