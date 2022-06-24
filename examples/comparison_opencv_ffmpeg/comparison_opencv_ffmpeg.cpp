@@ -31,7 +31,7 @@ void run_opencv(const char* video_path, const char* name)
 	const auto w = vc.get(cv::CAP_PROP_FRAME_WIDTH);
 	const auto h = vc.get(cv::CAP_PROP_FRAME_HEIGHT);
 	const auto fps = vc.get(cv::CAP_PROP_FPS);
-	const auto sleep_time = static_cast<int>(fps);
+	const auto sleep_time = 1;//static_cast<int>(fps);
 	cv::Mat frame(w, h, CV_8UC3);
 
 	cv::namedWindow(name);
@@ -62,7 +62,7 @@ void run_ffmpeg(const char* video_path, const char* name, vc::decode_support dec
 	const auto size = vc.get_frame_size(); 
 	const auto [w, h] = size.value();
 	const auto fps = vc.get_fps();
-	const auto sleep_time = static_cast<int>(fps.value_or(1));
+	const auto sleep_time = 1;//static_cast<int>(fps.value_or(1));
 	cv::Mat frame(h, w, CV_8UC3);
 
 	cv::namedWindow(name);
@@ -83,20 +83,23 @@ void run_ffmpeg(const char* video_path, const char* name, vc::decode_support dec
 
 int main(int argc, char** argv)
 {
-	// const auto video_path = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov";
-	const auto video_path = "../../../../tests/data/v.mp4";
+	const auto video_path = "rtsp://test:qwerty123@hikvision-002.lab.teiacare.com/ch1/main/av_stream";
+	// const auto video_path = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4";
+	// const auto video_path = "../../../../tests/data/v.mp4";
+	// const auto video_path = "../../../../tests/data/testsrc_120sec_30fps.mpg";
 	
-	run_opencv(video_path, "OpenCV");
-	run_ffmpeg(video_path, "Lib SW", vc::decode_support::SW);
+	// run_opencv(video_path, "OpenCV");
+	// run_ffmpeg(video_path, "Lib SW", vc::decode_support::SW);
+	// run_ffmpeg(video_path, "Lib HW", vc::decode_support::HW);
 
-	// std::thread opencv_thread([video_path]{run_opencv(video_path, "OpenCV");});
-	// std::thread ffmpeg_thread_sw([video_path]{run_ffmpeg(video_path, "Lib SW", vc::decode_support::SW);});
+	std::thread opencv_thread([video_path]{run_opencv(video_path, "OpenCV");});
+	std::thread ffmpeg_thread_hw([video_path]{run_ffmpeg(video_path, "Lib HW", vc::decode_support::HW);});
 	
-	// if(ffmpeg_thread_sw.joinable())
-	// 	ffmpeg_thread_sw.join();
+	if(ffmpeg_thread_hw.joinable())
+		ffmpeg_thread_hw.join();
 	
-	// if(opencv_thread.joinable())
-	// 	opencv_thread.join();
+	if(opencv_thread.joinable())
+		opencv_thread.join();
 
 	return 0;
 }

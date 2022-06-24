@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 		std::cout << "Missing video file path." << std::endl;
 		std::cout << "Usage: \nvideo_player_opencv <VIDEO_PATH>" << std::endl;
 		// video_path = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov";
-		video_path = "../../../../tests/data/testsrc_10sec_30fps.mkv";
+		video_path = "../../../tests/data/testsrc_10sec_30fps.mkv";
 		std::cout << "Using default RTSP video stream: " << video_path << std::endl;
 	}
 	else

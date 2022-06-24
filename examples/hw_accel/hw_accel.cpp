@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
     //     return -1;
     // }
 
-    const auto hw_type_name = "vaapi"; // vaapi vdpau dxva2 d3d11va
+    const auto hw_type_name = "d3d11va"; // vaapi vdpau dxva2 d3d11va
 
     type = av_hwdevice_find_type_by_name(hw_type_name);
     hw_pix_fmt = find_fmt_by_hw_type(type);

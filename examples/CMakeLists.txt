@@ -4,6 +4,12 @@ message("::VideoCapture:: Examples")
 
 message("")
 message("::::::::::::::::::::::::::::::::::::::::::::::::::::")
+message("::VideoCapture:: Examples - video_player_imgui")
+message("")
+add_subdirectory(video_player_imgui)
+
+message("")
+message("::::::::::::::::::::::::::::::::::::::::::::::::::::")
 message("::VideoCapture:: Examples - comparison_opencv_ffmpeg")
 message("")
 add_subdirectory(comparison_opencv_ffmpeg)

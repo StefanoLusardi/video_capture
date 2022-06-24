@@ -32,9 +32,9 @@ int main(int argc, char **argv)
 {
 	std::cout << "GLFW version: " << glfwGetVersionString() << std::endl;
 	vc::video_capture vc;
-	const auto video_path = "../../../../tests/data/testsrc_120sec_30fps.mkv";
+	const auto video_path = "../../../tests/data/v.mp4";
 
-	vc.open(video_path, vc::decode_support::HW);
+	vc.open(video_path, vc::decode_support::SW);
 
 	const auto fps = vc.get_fps();
 	const auto size = vc.get_frame_size();
